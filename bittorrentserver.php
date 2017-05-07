@@ -159,6 +159,10 @@ function bittorrentserver_plugin_admin_post(&$a) {
 	
 	$tA = explode("\n",$trackerList);
 	$fA = explode("\n",$fileList);
+	
+        logger("Tracker:".$tA, LOGGER_DEBUG);
+        logger("Files:".$fA." Raw:".$fileList, LOGGER_DEBUG);
+	
 	for ($i=0;$i<count($tA);$i++) {
 		$tA[$i] = trim($tA[$i]);
 	}
