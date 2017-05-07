@@ -212,7 +212,7 @@ function bittorrentserver_plugin_admin(&$a, &$o) {
  * @param unknown $b
  */
 function bittorrentserver_load_pdl($a, &$b) {
-	if ($b['module'] === 'wtserver2') {
+	if ($b['module'] === 'bittorrentserver') {
 		if (argc() > 1) {
 			$b['layout'] = '
                                                 [template]none[/template]
