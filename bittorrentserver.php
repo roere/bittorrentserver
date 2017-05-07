@@ -25,28 +25,32 @@ function bittorrentserver_install () {
 	}
 	
 	$init = parse_ini_file("./addon/".$appName."/".$appName.".cfg", true);
+	
+	$init["File"]=$init["File-Default"];
+	$init["Tracker"]=$init["Tracker-Default"];
+	
 	$init["Controller"]["sigterm"]=0;
 	$init["Controller"]["sigreload"]=1;
 	write_php_ini ($init, "./addon/".$appName."/".$appName.".cfg");
 	
 	$trackerList = get_config ($appName, 'trackerList');
-	if (($trackerList=="")||($trackerList==0)) {
+#	if (($trackerList=="")||($trackerList==0)) {
 		$trackerList = "";
 		foreach ($init["Tracker-Default"] as $key => $value) {
 			$trackerList= $trackerList."\n".$value; #create comma seperated list
 		}
 		$trackerList= substr($trackerList, 1); #remove first comma
 		set_config($appName, 'trackerList', $trackerList);
-	}	
+#	}	
 	
-	if (!$fileList = get_config ($appName, 'fileList')) {
+#	if (!$fileList = get_config ($appName, 'fileList')) {
 		$fileList= "";
 		foreach ($init["File-Default"] as $key => $value) {
 			$fileList = $fileList."\n".$value; #create comma seperated list
 		}
 		$fileList = substr($fileList, 1); #remove first comma
 		set_config($appName, 'fileList', $fileList);
-	}
+#	}
 	
 	bittorrentserver_run_server();
 	logger("Starting server: bittorrentserver_run_server", LOGGER_DEBUG);
