@@ -20,23 +20,7 @@ basePath = "./addon/"+appName+"/"
 configFileName = appName+".cfg"
 magnetURIFileName = "magnetURI.out"
 
-trackerList = ["udp://tracker.internetwarriors.net:1337/announce",
-               "udp://tracker.leechers-paradise.org:6969/announce",
-               "udp://tracker.coppersurfer.tk:6969/announce",
-               "udp://exodus.desync.com:6969/announce",
-               "udp://tracker.openbittorrent.com:80/announce",
-               "udp://tracker.sktorrent.net:6969/announce",
-               "udp://tracker.zer0day.to:1337/announce",
-               "udp://oscar.reyesleon.xyz:6969/announce",
-               'udp://tracker.istole.it:80/announce',
-               'udp://tracker.ccc.de:80/announce',
-               'http://tracker.torrentbay.to:6969/announce',
-               'udp://fr33domtracker.h33t.com:3310/announce',
-               'udp://tracker.publicbt.com:80/announce',
-               'udp://11.rarbg.com/announce',
-               "wss://tracker.openwebtorrent.com",
-               "wss://tracker.btorrent.xyz",
-               "wss://tracker.fastcast.nz"]    
+trackerList = []    
 
 #Controller: Get commands from PHP
 def inputController(ses,):
@@ -50,7 +34,6 @@ def inputController(ses,):
         param = inputString[inputString.find("]")+1:len(inputString)].split(",")
                 
         logFile.write("IC: Input command recievded ...\n")
-        #logFile.write("IC:"+command+", params:"+param)
         logFile.flush()
 
         if command == "[ADD_TRACKER]":
@@ -64,12 +47,8 @@ def inputController(ses,):
             logFile.flush()
             
             #read parameters
-            #filename = str(str(param[1]).encode("utf-8","backslashreplace"))
-            #filepath = str(str(param[0]).encode("utf-8","backslashreplace"))
-            
             filename = str(param[1])
             filepath = str(param[0])
-
             
             fileStorage = lt.file_storage()
             lt.add_files(fileStorage, str(filepath+"/"+filename))
@@ -114,7 +93,6 @@ def outputController (ses,):
             print('\rListening on: %d - %.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s' % \
                             (ses.listen_port(), s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, s.num_peers, state_str[s.state]))
             print ("Alerts:"+str(ses.pop_alert()))
-            #print ("DHT alert:"+str(lt.dht_get_peers_alert.what(lt.dht_get_peers_alert.category(lt.dht_get_peers_alert))))
         print ("_________________________________")
         sys.stdout.flush()
         time.sleep(1)   
