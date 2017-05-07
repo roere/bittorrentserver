@@ -160,16 +160,18 @@ function bittorrentserver_plugin_admin_post(&$a) {
 	$tA = explode("\n",$trackerList);
 	$fA = explode("\n",$fileList);
 	
-        logger("Tracker:".$tA, LOGGER_DEBUG);
-        logger("Files:".$fA." Raw:".$fileList, LOGGER_DEBUG);
-	
+	$fileListTemp = "";
 	for ($i=0;$i<count($tA);$i++) {
 		$tA[$i] = trim($tA[$i]);
 	}
 	for ($i=0;$i<count($fA);$i++) {
 		$fA[$i] = trim($fA[$i]," \t\n\r\0\x0B\"");
+		$fileListTemp = $fileListTemp.$fA[$i];
 	}
-		
+	
+	logger("Tracker:".$tA, LOGGER_DEBUG);
+        logger("Files:".$fA." -- ".$fileListTemp." Raw:".$fileList, LOGGER_DEBUG);
+	
 	$init = parse_ini_file("./addon/bittorrentserver/bittorrentserver.cfg", true);
 	$init["Tracker"]=$tA;
 	$init["File"]=$fA;
