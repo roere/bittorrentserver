@@ -113,7 +113,7 @@ def configFileController (ses,):
                 logFile.write("SIGTERM recieved...\n")
                 logFile.flush()
             elif config["Controller"]["sigreload"] == "1":
-                logFile.write("SIGRLOAD: reloading config file...\n")
+                logFile.write("SIGRELOAD: reloading config file...\n")
                 logFile.flush()
                 #add Trackers
                 trackerList = config.items("Tracker")
@@ -142,15 +142,15 @@ def configFileController (ses,):
                         else:
                             fPath = basePath+fRaw[:i+1] #relative path? add basePath!
 
-                    logFile.write("SIGRLOAD: reloading:"+fPath+"---"+fName+"\n")
+                    logFile.write("SIGRELOAD: reloading:"+fPath+"---"+fName+"\n")
                     logFile.flush()
                     if os.path.isfile(fPath+fName):
                         mLink = addTorrent(fPath, fName)
-                        logFile.write("SIGRLOAD: Magnet-Link:"+mLink+"\n")
+                        logFile.write("SIGRELOAD: Magnet-Link:"+mLink+"\n")
                         logFile.flush()
                         magnetURIOutFile.write("["+str(j)+"]"+mLink+"\n")
                     else:
-                        logFile.write("SIGRLOAD: file not found:"+fPath+fName+"\n")
+                        logFile.write("SIGRELOAD: file not found:"+fPath+fName+"\n")
                         logFile.flush() 
                         magnetURIOutFile.write("["+str(j)+"] File not found:"+fPath+fName+"\n")
                     j=j+1       
