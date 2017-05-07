@@ -14,7 +14,7 @@ global appName, basePath
 
 torrentHandleList = [] #Storage for Torrent handles
 torrentList = [] #Storage for Torrents
-appName = "wtserver2"
+appName = "bittorrentserver"
 basePath = "./addon/"+appName+"/"
 #basePath = "./"
 configFileName = appName+".cfg"
@@ -260,7 +260,7 @@ ses.listen_on(6881, 6891)
      
 #open logfile
 global logFile
-logFile = open(basePath+"wtserver2.log","w")
+logFile = open(basePath+"bittorrentserver.log","w")
 
 #open Magnet-URI output file
 global magnetURIOutFile
