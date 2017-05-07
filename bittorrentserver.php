@@ -15,7 +15,7 @@
  * Install plugin
  * Install python module libtorrent
  */
-function wtserver2_install () {
+function bittorrentserver_install () {
 	$appName = "bittorrentserver";
 	$basePath = "./addon/".$appName."/";
 	$configFileName = $appName.".cfg";
@@ -56,12 +56,12 @@ function wtserver2_install () {
 /**
  * 
  */
-function wtserver2_init () {	
+function bittorrentserver_init () {	
 }
 /**
  * 
  */
-function wtserver2_load(){
+function bittorrentserver_load(){
 	$appName = "bittorrentserver";
 	logger("Start bittorrent_run_server", LOGGER_DEBUG);
 	register_hook('load_pdl', 'addon/'.$appName.'/'.$appName.'.php', $appName.'_load_pdl');
@@ -73,7 +73,7 @@ function wtserver2_load(){
 /**
  * 
  */
-function wtserver2_unload(){
+function bittorrentserver_unload(){
 	$appName = "bittorrentserver";
 	logger("Unload bittorrentserver", LOGGER_DEBUG);
 	unregister_hook('load_pdl', 'addon/'.$appName.'/'.$appName.'.php', $appName.'_load_pdl');
@@ -98,7 +98,7 @@ function wtserver2_unload(){
  * and if so set our configuration setting for this person.
  *
  */
-function wtserver2_settings_post($a,$post) {
+function bittorrentserver_settings_post($a,$post) {
 	if(! local_channel())
 		return;
 		if($_POST['wtserver2-submit'])
@@ -118,7 +118,7 @@ function wtserver2_settings_post($a,$post) {
  *       <input type="submit" name="pluginnname-submit" class="settings-submit" ..... />
  *     </div>
  */
-function wtserver2_settings(&$a,&$s) {
+function bittorrentserver_settings(&$a,&$s) {
 	
 	if(! local_channel())
 		return;
@@ -149,8 +149,8 @@ function wtserver2_settings(&$a,&$s) {
  * Save admin settings
  * @param unknown $a
  */
-function wtserver2_plugin_admin_post(&$a) {
-	$appName = "wtserver2";
+function bittorrentserver_plugin_admin_post(&$a) {
+	$appName = "bittorrentserver";
 	
 	$trackerList = ((x($_POST, 'trackerList')) ? $_POST['trackerList'] : '');
 	$fileList = ((x($_POST, 'fileList')) ? ($_POST['fileList']) : '');
@@ -180,11 +180,11 @@ function wtserver2_plugin_admin_post(&$a) {
  * @param unknown $a
  * @param unknown $o
  */
-function wtserver2_plugin_admin(&$a, &$o) {
-	$t = get_markup_template("admin.tpl", "addon/wtserver2/");	
-	$trackerList = get_config ('wtserver2', 'trackerList');
-	$fileList = get_config ('wtserver2', 'fileList');
-	$fName = "./addon/wtserver2/magnetURI.out";
+function bittorrentserver_plugin_admin(&$a, &$o) {
+	$t = get_markup_template("admin.tpl", "addon/bittorrentserver/");	
+	$trackerList = get_config ('bittorrentserver', 'trackerList');
+	$fileList = get_config ('bittorrentserver', 'fileList');
+	$fName = "./addon/bittorrentserver/magnetURI.out";
 	$magnetURIList="";
 	if ($fp = fopen($fName, 'r')) {
 		flock($fp, LOCK_SH);
@@ -211,7 +211,7 @@ function wtserver2_plugin_admin(&$a, &$o) {
  * @param unknown $a
  * @param unknown $b
  */
-function wtserver2_load_pdl($a, &$b) {
+function bittorrentserver_load_pdl($a, &$b) {
 	if ($b['module'] === 'wtserver2') {
 		if (argc() > 1) {
 			$b['layout'] = '
@@ -223,8 +223,8 @@ function wtserver2_load_pdl($a, &$b) {
 /**
  * 
  */
-function wtserver2_run_server () {
-	logger("wtserver: Run server", LOGGER_DEBUG);
+function bittorrentserver_run_server () {
+	logger("bittorrentserver: Run server", LOGGER_DEBUG);
 	
 	session_start();
 	
@@ -235,8 +235,8 @@ function wtserver2_run_server () {
 	);
 	
 	$python = "python3";
-	$cwd = "./addon/wtserver2";
-	$pScript = "wtserver.py";
+	$cwd = "./addon/bittorrentserver";
+	$pScript = "bittorrentserver.py";
 	
 	$env = array('some_string' => 'aeiou', 'some_int' => 123);
 	print $python." ".$cwd."/".$pScript;
@@ -249,11 +249,11 @@ function wtserver2_run_server () {
 	
 	if (is_resource($process)) {
 		
-		fwrite ($pipes[0], "[ADD_FILE]./addon/wtserver2/media,sintel.mp4\n");
+		fwrite ($pipes[0], "[ADD_FILE]./addon/bittorrentserver/media,sintel.mp4\n");
 		#print fgets($pipes[1]);
 		$fBack = fgets($pipes[1]);
 		logger("Feedback1:".$fBack, LOGGER_DEBUG);
-		fwrite ($pipes[0], "[ADD_FILE]./addon/wtserver2/media,positionen.mp4\n");
+		fwrite ($pipes[0], "[ADD_FILE]./addon/bittorrentserver/media,positionen.mp4\n");
 		#print fgets($pipes[1]);
 		$fBack = fgets($pipes[1]);
 		logger("Feedback2:".$fBack, LOGGER_DEBUG);
@@ -272,10 +272,10 @@ function wtserver2_run_server () {
 		#$return_value = proc_close($process);
 		
 		#echo "command returned $return_value\n";
-		logger("NOW: wtserver.py as Tracker running...", LOGGER_DEBUG);
+		logger("NOW: bittorrentserver.py as Tracker running...", LOGGER_DEBUG);
 	} else {
 		echo "No resource available";
-		logger("wtserver: Error in run_server", LOGGER_DEBUG);
+		logger("bittorrentserver: Error in run_server", LOGGER_DEBUG);
 	}
 }
 /**
@@ -283,7 +283,7 @@ function wtserver2_run_server () {
  * @param unknown $a
  * @param unknown $b
  */
-function wtserver2_prepare_body(&$a,&$b) {
+function bittorrentserver_prepare_body(&$a,&$b) {
 }
 /**
  * Write config file for python script
