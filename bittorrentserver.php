@@ -68,7 +68,7 @@ function bittorrentserver_load(){
 	register_hook('feature_settings', 'addon/'.$appName.'/'.$appName.'.php', $appName.'_settings');
 	register_hook('feature_settings_post', 'addon/'.$appName.'/'.$appName.'.php', $appName.'_settings_post');
 			
-	/*register_hook('prepare_body', 'addon/wtserver2/wtserver.php', 'wtserver_prepare_body', 10);*/
+	/*register_hook('prepare_body', 'addon/bittorrentserver/wtserver.php', 'wtserver_prepare_body', 10);*/
 }
 /**
  * 
@@ -87,7 +87,7 @@ function bittorrentserver_unload(){
 	
 	
 	#bak
-	/*unregister_hook('prepare_body', 'addon/wtserver2/wtserver.php', 'wtserver_prepare_body');*/
+	/*unregister_hook('prepare_body', 'addon/bittorrentserver/bittorrentserver.php', 'bittorrentserver_prepare_body');*/
 }
 /**
  *
@@ -101,8 +101,8 @@ function bittorrentserver_unload(){
 function bittorrentserver_settings_post($a,$post) {
 	if(! local_channel())
 		return;
-		if($_POST['wtserver2-submit'])
-			set_pconfig(local_channel(),'wtserver2','enable',intval($_POST['wtserver2']));
+		if($_POST['bittorrentserver-submit'])
+			set_pconfig(local_channel(),'bittorrentserver','enable',intval($_POST['bittorrentserver']));
 }
 /**
  *
@@ -127,22 +127,22 @@ function bittorrentserver_settings(&$a,&$s) {
 		#head_add_css('/addon/randplace/randplace.css');
 		
 		/* Get the current state of our config variable */
-		$enabled = get_pconfig(local_channel(),'wtserver2','enable');
+		$enabled = get_pconfig(local_channel(),'bittorrentserver','enable');
 		
 		$checked = (($enabled) ? ' checked="checked" ' : '');
 		
 		/* Add some HTML to the existing form */
 		
 		$s .= '<div class="settings-block">';
-		$s .= '<h3>' . t('wtserver2 Settings') . '</h3>';
-		$s .= '<div id="wtserver2-enable-wrapper">';
-		$s .= '<label id="wtserver2-enable-label" for="wtserver2-checkbox">' . t('Enable wtserver2 Plugin') . '</label>';
-		$s .= '<input id="wtserver2-checkbox" type="checkbox" name="wtserver2" value="1" ' . $checked . '/>';
+		$s .= '<h3>' . t('bittorrentserver Settings') . '</h3>';
+		$s .= '<div id="bittorrentserver-enable-wrapper">';
+		$s .= '<label id="bittorrentserver-enable-label" for="bittorrentserver-checkbox">' . t('Enable bittorrentserver Plugin') . '</label>';
+		$s .= '<input id="bittorrentserver-checkbox" type="checkbox" name="bittorrentserver" value="1" ' . $checked . '/>';
 		$s .= '</div><div class="clear"></div>';
 		
 		/* provide a submit button */
 		
-		$s .= '<div class="settings-submit-wrapper" ><input type="submit" name="wtserver2-submit" class="settings-submit" value="' . t('Submit') . '" /></div></div>';
+		$s .= '<div class="settings-submit-wrapper" ><input type="submit" name="bittorrentserver-submit" class="settings-submit" value="' . t('Submit') . '" /></div></div>';
 				
 }
 /**
@@ -166,11 +166,11 @@ function bittorrentserver_plugin_admin_post(&$a) {
 		$fA[$i] = trim($fA[$i]," \t\n\r\0\x0B\"");
 	}
 		
-	$init = parse_ini_file("./addon/wtserver2/wtserver2.cfg", true);
+	$init = parse_ini_file("./addon/bittorrentserver/bittorrentserver.cfg", true);
 	$init["Tracker"]=$tA;
 	$init["File"]=$fA;
 	$init["Controller"]["sigreload"]=1;
-	write_php_ini ($init, "./addon/wtserver2/wtserver2.cfg");
+	write_php_ini ($init, "./addon/bittorrentserver/bittorrentserver.cfg");
 	
 	info(t('Settings updated.') . EOL);
 }
