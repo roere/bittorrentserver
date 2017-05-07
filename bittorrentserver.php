@@ -1,36 +1,7 @@
-
-Skip to content
-This repository
-
-    Pull requests
-    Issues
-    Gist
-
-    @roere
-
-1
-0
-
-    0
-
-roere/bittorrentserver
-Code
-Issues 0
-Pull requests 0
-Projects 0
-Wiki
-Pulse
-Graphs
-Settings
-bittorrentserver/bittorrentserver/bittorrentserver.php
-4d1840f 16 hours ago
-Dr.René Röderstein Initial upload
-349 lines (295 sloc) 9.96 KB
-<?php
 #!/usr/bin/php
 /**
  *
- * Name: Webtorrent Server
+ * Name: Bittorrent Server
  * Description: A Bittorrent Server for hubzilla. Alpha. Unstable. For testing.
  * Version: 0.1
  * Depends: Core, libtorrent (Python)
