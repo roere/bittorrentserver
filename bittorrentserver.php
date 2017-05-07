@@ -250,34 +250,23 @@ function bittorrentserver_run_server () {
 	$process = proc_open($python." ".$cwd."/".$pScript, $descriptorspec, $pipes, null, $env);
 	logger("JUST startet wtserver.py...", LOGGER_DEBUG);
 	logger("Resourc Type:".get_resource_type($process));
-	
-	#$_SESSION ['process'] = $process;
-	
+		
 	if (is_resource($process)) {
 		
-		fwrite ($pipes[0], "[ADD_FILE]./addon/bittorrentserver/media,sintel.mp4\n");
-		#print fgets($pipes[1]);
-		$fBack = fgets($pipes[1]);
-		logger("Feedback1:".$fBack, LOGGER_DEBUG);
-		fwrite ($pipes[0], "[ADD_FILE]./addon/bittorrentserver/media,positionen.mp4\n");
-		#print fgets($pipes[1]);
-		$fBack = fgets($pipes[1]);
-		logger("Feedback2:".$fBack, LOGGER_DEBUG);
-		fwrite ($pipes[0], "[ADD_TRACKER]www:Shittracker,lll.PPPTrackr\n");
-		$fBack = fgets($pipes[1]);
-		logger("Feedback3:".$fBack, LOGGER_DEBUG);
+		#fwrite ($pipes[0], "[ADD_FILE]./addon/bittorrentserver/media,sintel.mp4\n");
+		#$fBack = fgets($pipes[1]);
+		#logger("Feedback1:".$fBack, LOGGER_DEBUG);
+		#fwrite ($pipes[0], "[ADD_FILE]./addon/bittorrentserver/media,positionen.mp4\n");
+		#$fBack = fgets($pipes[1]);
+		#logger("Feedback2:".$fBack, LOGGER_DEBUG);
+		#fwrite ($pipes[0], "[ADD_TRACKER]www:Shittracker,lll.PPPTrackr\n");
+		#$fBack = fgets($pipes[1]);
+		#logger("Feedback3:".$fBack, LOGGER_DEBUG);
 		
-		#$run = true;
-		#while($run) {
 		for ($i=0;$i<10;$i++) {
 			print fgets($pipes[1]); #Print Status
 		}
 		
-		#fclose($pipes[1]);
-		#fclose($pipes[0]);
-		#$return_value = proc_close($process);
-		
-		#echo "command returned $return_value\n";
 		logger("NOW: bittorrentserver.py as Tracker running...", LOGGER_DEBUG);
 	} else {
 		echo "No resource available";
