@@ -127,7 +127,7 @@ def configFileController (ses,):
                 fileList = config.items("File")
                 
                 #check all files
-                j=0
+                j=1
                 for mFile in fileList:
                    
                     fRaw = mFile[1].replace("\"","") #delete " in file name
