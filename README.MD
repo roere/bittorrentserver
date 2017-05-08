@@ -34,4 +34,4 @@ The idea behind this plugin was to use Webtorrents in Hubzilla. Libtorrent does 
 
 Seeding Files from Database
 
-For a better integration it should be possible to choose files from the Hubzilla cloud. Libtorrents default storage is the file system. The storage_interface (http://libtorrent.org/reference-Custom_Storage.html)) allows the integration of other storages, like RAM, database, etc., but a database_storage is not yet implemented (http://stackoverflow.com/questions/43619769/use-database-as-custom-storage-with-libtorrent-python).  
+For a better integration it should be possible to choose files from the Hubzilla cloud. Libtorrents default storage is the file system. The storage_interface (http://libtorrent.org/reference-Custom_Storage.html) allows the integration of other storages, like RAM, database, etc., but a database_storage is not yet implemented (http://stackoverflow.com/questions/43619769/use-database-as-custom-storage-with-libtorrent-python).  
