@@ -163,13 +163,6 @@ function bittorrentserver_plugin_admin_post(&$a) {
 	
 	$tA = explode("\n",$trackerList);
 	$fA = explode("\n",$fileList);
-	
-#	for ($i=0;$i<count($tA);$i++) {
-#		$tA[$i] = trim($tA[$i]);
-#	}
-#	for ($i=0;$i<count($fA);$i++) {
-#		$fA[$i] = trim($fA[$i]);
-#	}
 		
 	$init = parse_ini_file("./addon/bittorrentserver/bittorrentserver.cfg", true);
 	$init["Tracker"]=$tA;
