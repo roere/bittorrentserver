@@ -117,7 +117,7 @@ def configFileController (ses,):
                 trackerList = config.items("Tracker")
                 lList = []
                 for tracker in trackerList:
-                    lList.append(tracker[1])
+                    lList.append(tracker[1].replace("\"",""))
                 appendTrackerList(lList)
                 
                 #add Files
