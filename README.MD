@@ -11,6 +11,7 @@ HUBZILLA-PLUGIN
 
 INSTALL
  - you need to have Python3 installed 
+ - install libtorrent (python)
  - switch to [hubzilla-path]/addon
  - run: git clone https://github.com/roere/bittorrentserver.git
  - make the folders 'bittorrentserver' and 'bittorrentserver/media' writable for the webserver
