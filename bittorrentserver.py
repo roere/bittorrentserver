@@ -238,7 +238,6 @@ ses.listen_on(6881, 6891)
 #T3   
      
 #open logfile
-global logFile
 logFile = open(basePath+"bittorrentserver.log","w")
 
 #open Magnet-URI output file
