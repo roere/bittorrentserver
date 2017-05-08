@@ -16,13 +16,16 @@ INSTALL
  - make the folders 'bittorrentserver' and 'bittorrentserver/media' writable for the webserver
 
 USE
+
 On activating the plugin, the server starts on port [6881..6891].
 The plugin settings can be changed on the plugins admin page. You can add seeding files or remove them. If you just give a file name, the plugin expects the file in bittorrent/media. You can give an absolute file path, too, but must make sure that the media folder is writable for the webserver, because the torrent-file will be stored there.
 The plugin comes with a standard list of trackers. You can edit that list. Currently, the standard list is reloaded every time the plugin is activated.
 You find a list of the magnet links generated from the given files, at the bottom of the admin page. After saving the settings, the list is not updated immediatly. Just reload the page to update the list (the reload button on the page is not working yet).
 
 ISSUES
+
 Architecture
+
 I couldn't find a suitable PHP library (necessary functions, under active development, e.g.). Libtorrent is written in C and provides Python-bindings. So currently the plugin starts a Phyton script that acts as the seeder. The script looks for changes in the bittorrent.cfg (seeding files, trackers) and reacts on them. 
 
 Webtorrent-Support
