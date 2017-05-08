@@ -2,7 +2,7 @@ HUBZILLA-PLUGIN
  * Name: Bittorrent Server
  * Description: A Bittorrent Server for hubzilla. Alpha. Unstable. Proof of Concept. For testing.
  * Version: 0.1
- * Depends: Core, libtorrent (Python)
+ * Depends: Core, libtorrent (Python), Python3
  * Recommends: None
  * Category: Torrents
  * Author: ROERE <webmaster@roederstein.de>
@@ -10,6 +10,7 @@ HUBZILLA-PLUGIN
 
 
 INSTALL
+ - you need to have Python3 installed 
  - switch to [hubzilla-path]/addon
  - run: git clone https://github.com/roere/bittorrentserver.git
  - make the folders 'bittorrentserver' and 'bittorrentserver/media' writable for the webserver
@@ -21,4 +22,9 @@ The plugin comes with a standard list of trackers. You can edit that list. Curre
 You find a list of the magnet links generated from the given files, at the bottom of the admin page. After saving the settings, the list is not updated immediatly. Just reload the page to update the list (the reload button on the page is not working yet).
 
 ISSUES
+Architecture
+I couldn't find a suitable PHP library (necessary functions, under active development, e.g.). Libtorrent is written in C and provides Python-bindings. So currently the plugin starts a Phyton script that acts as the seeder. The script looks for changes in the bittorrent.cfg (seeding files, trackers) and reacts on them. 
 
+Webtorrent-Support
+
+Seeding Files from Database
