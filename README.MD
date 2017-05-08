@@ -26,8 +26,12 @@ ISSUES
 
 Architecture
 
-I couldn't find a suitable PHP library (necessary functions, under active development, e.g.). Libtorrent is written in C and provides Python-bindings. So currently the plugin starts a Phyton script that acts as the seeder. The script looks for changes in the bittorrent.cfg (seeding files, trackers) and reacts on them. 
+I couldn't find a suitable PHP library (necessary functions, under active development, e.g.). Libtorrent is written in C and provides Python-bindings. So currently the plugin starts a Phyton script that acts as the seeder. The script looks for changes in the bittorrentserver.cfg (seeding files, trackers) and reacts on them. 
 
 Webtorrent-Support
 
+The idea behind this plugin was to use Webtorrents in Hubzilla. Libtorrent does not support Webtorrent yet, also it is planned since quite some time: https://github.com/arvidn/libtorrent/issues/223
+
 Seeding Files from Database
+
+For a better integration it should be possible to choose files from the Hubzilla cloud. Libtorrents default storage is the file system. The storage_interface (http://libtorrent.org/reference-Custom_Storage.html)) allows the integration of other storages, like RAM, database, etc., but a database_storage is not yet implemented (http://stackoverflow.com/questions/43619769/use-database-as-custom-storage-with-libtorrent-python?noredirect=1#comment74340415_43619769).  
