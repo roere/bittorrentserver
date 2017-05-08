@@ -10,7 +10,7 @@ HUBZILLA-PLUGIN
 
 
 INSTALL
- - switch to <hubzilla-path>/addon
+ - switch to [hubzilla-path]/addon
  - run: git clone https://github.com/roere/bittorrentserver.git
  - make the folders 'bittorrentserver' and 'bittorrentserver/media' writable for the webserver
 
