@@ -10,8 +10,6 @@ import configparser
 import libtorrent as lt
 from fileinput import filename
 
-global appName, basePath
-
 torrentHandleList = [] #Storage for Torrent handles
 torrentList = [] #Storage for Torrents
 appName = "bittorrentserver"
@@ -170,6 +168,7 @@ def configFileController (ses,):
     
 #Add Bittorrent-Tracker
 def addTracker (tracker):
+    global trackerList
     if not (tracker in trackerList):
         trackerList.append(tracker)
     for torrent in torrentList:
@@ -177,6 +176,7 @@ def addTracker (tracker):
 
 #Remove Bittorrent-Tracker
 def removeTracker (tracker):
+    global trackerList
     if (tracker in trackerList):
         trackerList.remove(tracker)
     #ToDo: remove tracker from torrent.
@@ -193,6 +193,7 @@ def addTrackerList (torrent):
             
 #
 def addTorrent (filepath, filename):
+    global torrentList, torrentHandleList, ses
     fileStorage = lt.file_storage()
     lt.add_files(fileStorage, str(filepath+filename))
     lTorrent = lt.create_torrent(fileStorage) #lTorrent = localTorrent
