@@ -19,7 +19,7 @@ function bittorrentserver_install () {
 	$appName = "bittorrentserver";
 	$basePath = "./addon/".$appName."/";
 	$configFileName = $appName.".cfg";
-		
+	
 	if (!$init = parse_ini_file($basePath.$configFileName, true)) {
 		logger("Unable to load config file:".$basePath.$configFileName, LOGGER_DEBUG);
 	}
@@ -34,23 +34,19 @@ function bittorrentserver_install () {
 	write_php_ini ($init, "./addon/".$appName."/".$appName.".cfg");
 	
 	$trackerList = get_config ($appName, 'trackerList');
-#	if (($trackerList=="")||($trackerList==0)) {
-		$trackerList = "";
-		foreach ($init["Tracker-Default"] as $key => $value) {
-			$trackerList= $trackerList."\n".$value; #create comma seperated list
-		}
-		$trackerList= substr($trackerList, 1); #remove first comma
-		set_config($appName, 'trackerList', $trackerList);
-#	}	
-	
-#	if (!$fileList = get_config ($appName, 'fileList')) {
-		$fileList= "";
-		foreach ($init["File-Default"] as $key => $value) {
-			$fileList = $fileList."\n".$value; #create comma seperated list
-		}
-		$fileList = substr($fileList, 1); #remove first comma
-		set_config($appName, 'fileList', $fileList);
-#	}
+	$trackerList = "";
+	foreach ($init["Tracker-Default"] as $key => $value) {
+		$trackerList= $trackerList."\n".$value; #create comma seperated list
+	}
+	$trackerList= substr($trackerList, 1); #remove first comma
+	set_config($appName, 'trackerList', $trackerList);
+
+	$fileList= "";
+	foreach ($init["File-Default"] as $key => $value) {
+		$fileList = $fileList."\n".$value; #create comma seperated list
+	}
+	$fileList = substr($fileList, 1); #remove first comma
+	set_config($appName, 'fileList', $fileList);
 	
 	bittorrentserver_run_server();
 	logger("Starting server: bittorrentserver_run_server", LOGGER_DEBUG);
@@ -58,12 +54,12 @@ function bittorrentserver_install () {
 	return;
 }
 /**
- * 
+ *
  */
-function bittorrentserver_init () {	
+function bittorrentserver_init () {
 }
 /**
- * 
+ *
  */
 function bittorrentserver_load(){
 	$appName = "bittorrentserver";
@@ -71,11 +67,11 @@ function bittorrentserver_load(){
 	register_hook('load_pdl', 'addon/'.$appName.'/'.$appName.'.php', $appName.'_load_pdl');
 	register_hook('feature_settings', 'addon/'.$appName.'/'.$appName.'.php', $appName.'_settings');
 	register_hook('feature_settings_post', 'addon/'.$appName.'/'.$appName.'.php', $appName.'_settings_post');
-			
+	
 	/*register_hook('prepare_body', 'addon/bittorrentserver/wtserver.php', 'wtserver_prepare_body', 10);*/
 }
 /**
- * 
+ *
  */
 function bittorrentserver_unload(){
 	$appName = "bittorrentserver";
@@ -84,7 +80,6 @@ function bittorrentserver_unload(){
 	unregister_hook('feature_settings', 'addon/'.$appName.'/'.$appName.'.php', $appName.'_settings');
 	unregister_hook('feature_settings_post', 'addon/'.$appName.'/'.$appName.'.php', $appName.'_settings_post');
 	
-	#$init = parse_ini_file($basePath.$configFileName, true);
 	$init = parse_ini_file("./addon/".$appName."/".$appName.".cfg", true);
 	$init["Controller"]["sigterm"]=1;
 	write_php_ini ($init, "./addon/".$appName."/".$appName.".cfg");
@@ -147,7 +142,7 @@ function bittorrentserver_settings(&$a,&$s) {
 		/* provide a submit button */
 		
 		$s .= '<div class="settings-submit-wrapper" ><input type="submit" name="bittorrentserver-submit" class="settings-submit" value="' . t('Submit') . '" /></div></div>';
-				
+		
 }
 /**
  * Save admin settings
@@ -163,7 +158,7 @@ function bittorrentserver_plugin_admin_post(&$a) {
 	
 	$tA = explode("\n",$trackerList);
 	$fA = explode("\n",$fileList);
-		
+	
 	$init = parse_ini_file("./addon/bittorrentserver/bittorrentserver.cfg", true);
 	$init["Tracker"]=$tA;
 	$init["File"]=$fA;
@@ -174,35 +169,44 @@ function bittorrentserver_plugin_admin_post(&$a) {
 }
 /**
  * $o: Placeholder Array
- * 
+ *
  * @param unknown $a
  * @param unknown $o
  */
 function bittorrentserver_plugin_admin(&$a, &$o) {
-	$t = get_markup_template("admin.tpl", "addon/bittorrentserver/");	
+	$t = get_markup_template("admin.tpl", "addon/bittorrentserver/");
 	$trackerList = get_config ('bittorrentserver', 'trackerList');
 	$fileList = get_config ('bittorrentserver', 'fileList');
 	$fName = "./addon/bittorrentserver/magnetURI.out";
-	$magnetURIList="";
+	$pName = "./addon/bittorrentserver/bittorrentserver.ping";
+	$magnetURIList = "";
+	$pingMessage = "";
 	if ($fp = fopen($fName, 'r')) {
 		flock($fp, LOCK_SH);
-		$data = array();
 		while ($row = fgets($fp)) {
-			$data[] = $row;
 			$magnetURIList = $magnetURIList.$row."\n";
 		}
 		flock($f, LOCK_UN);
 		fclose($f);
 	}
 	
+	if ($fp = fopen($pName, 'r')) {
+		flock($fp, LOCK_SH);
+		while ($row = fgets($fp)) {
+			$pingMessage = $pingMessage.$row."\n";
+		}
+		flock($f, LOCK_UN);
+		fclose($f);
+	}
+	
 	$o = replace_macros($t, array(
-						'$submit' => t('Submit Settings'),
-						'$reloadMagnetLinks' => t('Reload Magnetlinks'),
-			            '$fileList' => array('fileList', t('Seed-Dateiliste'), $fileList, t('Pfadangaben relativ zum Basisverzeichnis '.$basePath)),
-			            '$trackerList' => array('trackerList', t('Tracker-Liste'), $trackerList, t('Liste der Bittorrent-Tracker.')),
-	));	
+			'$submit' => t('Submit Settings'),
+			'$fileList' => array('fileList', t('Seed-Dateiliste'), $fileList, t('Pfadangaben relativ zum Basisverzeichnis '.$basePath)),
+			'$trackerList' => array('trackerList', t('Tracker-Liste'), $trackerList, t('Liste der Bittorrent-Tracker.')),
+	));
 	// info text field
 	$o .= '<h3>MagnetURI</h3><div id="magnetLink"><span style="word-wrap: break-word; word-break: break-all;"><pre>'.$magnetURIList.'</pre></span></div>';
+	$o .= '<h3>Server Ping</h3><div id="magnetLink"><span style="word-wrap: break-word; word-break: break-all;"><pre>'.$pingMessage.'</pre></span></div>';
 }
 /**
  * function unclear!
@@ -219,7 +223,7 @@ function bittorrentserver_load_pdl($a, &$b) {
 	}
 }
 /**
- * 
+ *
  */
 function bittorrentserver_run_server () {
 	logger("bittorrentserver: Run server", LOGGER_DEBUG);
@@ -242,7 +246,7 @@ function bittorrentserver_run_server () {
 	$process = proc_open($python." ".$cwd."/".$pScript, $descriptorspec, $pipes, null, $env);
 	logger("JUST startet wtserver.py...", LOGGER_DEBUG);
 	logger("Resourc Type:".get_resource_type($process));
-		
+	
 	if (is_resource($process)) {
 		
 		#fwrite ($pipes[0], "[ADD_FILE]./addon/bittorrentserver/media,sintel.mp4\n");
@@ -255,9 +259,9 @@ function bittorrentserver_run_server () {
 		#$fBack = fgets($pipes[1]);
 		#logger("Feedback3:".$fBack, LOGGER_DEBUG);
 		
-		for ($i=0;$i<10;$i++) {
-			print fgets($pipes[1]); #Print Status
-		}
+		#for ($i=0;$i<10;$i++) {
+		#	print fgets($pipes[1]); #Print Status
+		#}
 		
 		logger("NOW: bittorrentserver.py as Tracker running...", LOGGER_DEBUG);
 	} else {
@@ -266,7 +270,7 @@ function bittorrentserver_run_server () {
 	}
 }
 /**
- * 
+ *
  * @param unknown $a
  * @param unknown $b
  */

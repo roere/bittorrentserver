@@ -49,22 +49,22 @@ def inputController(ses,):
             filepath = str(param[0])
             
             fileStorage = lt.file_storage()
-            lt.add_files(fileStorage, str(filepath+"/"+filename))
+            lt.add_files(fileStorage, os.path.normpath(filepath+"/"+filename))
             lTorrent = lt.create_torrent(fileStorage) #lTorrent = localTorrent
             torrentList.append(lTorrent)
             addTrackerList(lTorrent)
             
-            lTorrent.set_creator('libtorrent %s' % lt.version)
+            lTorrent.set_creator('Hubzilla using Libtorrent %s' % lt.version)
             lTorrent.set_comment("Filename:"+filename)
-            lt.set_piece_hashes(lTorrent, filepath)
+            lt.set_piece_hashes(lTorrent, os.path.normpath(filepath))
             gTorrent = lTorrent.generate() #gTorrent = generated Torrent
             
             ##write Torrent file to filesystem    
-            tFile = open(str(filepath+"/"+filename+".torrent"), "wb")
+            tFile = open(os.path.normpath(filepath+"/"+filename+".torrent"), "wb")
             tFile.write(lt.bencode(gTorrent))
             tFile.close()
             
-            handle = ses.add_torrent({'ti': lt.torrent_info(filepath+"/"+filename+".torrent"), 'save_path': filepath, 'seed_mode': True})
+            handle = ses.add_torrent({'ti': lt.torrent_info(os.path.normpath(filepath+"/"+filename+".torrent")), 'save_path': os.path.normpath(filepath), 'seed_mode': True})
             torrentHandleList.append(handle)
             
             mLink = lt.make_magnet_uri(lt.torrent_info(gTorrent))
@@ -80,20 +80,21 @@ def inputController(ses,):
     logFile.write("SIGTERM: inputController ended...\n")
     logFile.flush()
             
-#outputController: Send messages to PHP
+#outputController: write status message into pingFile that can be read by the plugin
 def outputController (ses,):
     global run
     while run:
-        for handle in torrentHandleList:
-            s = handle.status()
-            state_str = ['queued', 'checking', 'downloading metadata', \
-                         'downloading', 'finished', 'seeding', 'allocating', 'checking fastresume']
-            print('\rListening on: %d - %.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s' % \
-                            (ses.listen_port(), s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, s.num_peers, state_str[s.state]))
-            print ("Alerts:"+str(ses.pop_alert()))
-        print ("_________________________________")
-        sys.stdout.flush()
-        time.sleep(1)   
+        with open(os.path.normpath(basePath+appName+".ping"),"w") as pingFile:
+            pingFile.write('['+time.strftime("%d.%m.%Y - %H:%M:%S")+'] Process ID: '+str(os.getpid())+' Listening on: %d' % \
+                           (ses.listen_port()))
+            for handle in torrentHandleList:
+                s = handle.status()
+                state_str = ['queued', 'checking', 'downloading metadata', \
+                             'downloading', 'finished', 'seeding', 'allocating', 'checking fastresume']
+                pingFile.write('\n%.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s' % \
+                                (s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, s.num_peers, state_str[s.state]))
+        pingFile.close()
+        time.sleep(10)   
     logFile.write("SIGTERM: outputController ended...\n")
     logFile.flush()
     
@@ -105,7 +106,7 @@ def configFileController (ses,):
     while run:
         if stamp != os.stat(basePath+configFileName).st_mtime:
             stamp = os.stat(basePath+configFileName).st_mtime
-            config.read(basePath+configFileName)
+            config.read(os.path.normpath(basePath+configFileName))
             if config["Controller"]["sigterm"] == "1":
                 run = False  
                 logFile.write("SIGTERM recieved...\n")
@@ -121,7 +122,7 @@ def configFileController (ses,):
                 appendTrackerList(lList)
                 
                 #add Files
-                magnetURIOutFile = open(basePath+magnetURIFileName, 'w')
+                magnetURIOutFile = open(os.path.normpath(basePath+magnetURIFileName), 'w')
                 fileList = config.items("File")
                 
                 #check all files
@@ -148,15 +149,15 @@ def configFileController (ses,):
                         logFile.flush()
                         magnetURIOutFile.write("["+str(j)+"]"+mLink+"\n")
                     else:
-                        logFile.write("SIGRELOAD: file not found:"+fPath+fName+"\n")
+                        logFile.write("SIGRELOAD: file not found:"+os.path.normpath(fPath+fName)+"\n")
                         logFile.flush() 
-                        magnetURIOutFile.write("["+str(j)+"] File not found:"+fPath+fName+"\n")
+                        magnetURIOutFile.write("["+str(j)+"] File not found:"+os.path.normpath(fPath+fName)+"\n")
                     j=j+1       
                 magnetURIOutFile.close()
                 config["Controller"]["sigreload"] = "0"
                 logFile.write("SIGRELOAD: resetting SIGRELOAD...")
                 logFile.flush()
-                with open(basePath+configFileName, 'w') as configfile:
+                with open(os.path.normpath(basePath+configFileName), 'w') as configfile:
                     config.write(configfile)
                 logFile.write("SIGRELOAD: reset!...")
                 logFile.flush()
@@ -195,22 +196,22 @@ def addTrackerList (torrent):
 def addTorrent (filepath, filename):
     global torrentList, torrentHandleList, ses
     fileStorage = lt.file_storage()
-    lt.add_files(fileStorage, str(filepath+filename))
+    lt.add_files(fileStorage, os.path.normpath(filepath+filename))
     lTorrent = lt.create_torrent(fileStorage) #lTorrent = localTorrent
     torrentList.append(lTorrent)
     addTrackerList(lTorrent)
     
-    lTorrent.set_creator('libtorrent %s' % lt.version)
+    lTorrent.set_creator('Hubzilla using Libtorrent %s' % lt.version)
     lTorrent.set_comment("Filename:"+filename)
-    lt.set_piece_hashes(lTorrent, filepath)
+    lt.set_piece_hashes(lTorrent, os.path.normpath(filepath))
     gTorrent = lTorrent.generate() #gTorrent = generated Torrent
     
     ##write Torrent file to filesystem    
-    tFile = open(str(filepath+filename+".torrent"), "wb")
+    tFile = open(os.path.normpath(filepath+filename+".torrent"), "wb")
     tFile.write(lt.bencode(gTorrent))
     tFile.close()
     
-    handle = ses.add_torrent({'ti': lt.torrent_info(filepath+filename+".torrent"), 'save_path': filepath, 'seed_mode': True})
+    handle = ses.add_torrent({'ti': lt.torrent_info(os.path.normpath(filepath+filename+".torrent")), 'save_path': os.path.normpath(filepath), 'seed_mode': True})
     torrentHandleList.append(handle)
     
     mLink = lt.make_magnet_uri(lt.torrent_info(gTorrent))
@@ -238,7 +239,7 @@ ses.listen_on(6881, 6891)
 #T3   
      
 #open logfile
-logFile = open(basePath+"bittorrentserver.log","w")
+logFile = open(os.path.normpath(basePath+"bittorrentserver.log"),"w")
 
 #open Magnet-URI output file
 global magnetURIOutFile
