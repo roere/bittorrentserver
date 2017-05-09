@@ -80,20 +80,22 @@ def inputController(ses,):
     logFile.write("SIGTERM: inputController ended...\n")
     logFile.flush()
             
-#outputController: Send messages to PHP
+#outputController: write status message into pingFile that can be read by the plugin
 def outputController (ses,):
     global run
     while run:
-        for handle in torrentHandleList:
-            s = handle.status()
-            state_str = ['queued', 'checking', 'downloading metadata', \
-                         'downloading', 'finished', 'seeding', 'allocating', 'checking fastresume']
-            print('\rListening on: %d - %.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s' % \
-                            (ses.listen_port(), s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, s.num_peers, state_str[s.state]))
-            print ("Alerts:"+str(ses.pop_alert()))
-        print ("_________________________________")
-        sys.stdout.flush()
-        time.sleep(1)   
+        with open(os.path.normpath(basePath+appName+".ping"),"w") as pingFile:
+            for handle in torrentHandleList:
+                s = handle.status()
+                state_str = ['queued', 'checking', 'downloading metadata', \
+                             'downloading', 'finished', 'seeding', 'allocating', 'checking fastresume']
+                #print('\rListening on: %d - %.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s' % \
+                #                (ses.listen_port(), s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, s.num_peers, state_str[s.state]))
+                pingFile.write('['+time.strftime("%d.%m.%Y - %H:%M:%S")+'] Process ID:'+os.getpid()+' Listening on: %d - %.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s' % \
+                                (ses.listen_port(), s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, s.num_peers, state_str[s.state]))
+        #sys.stdout.flush()
+        pingFile.close()
+        time.sleep(10)   
     logFile.write("SIGTERM: outputController ended...\n")
     logFile.flush()
     
