@@ -85,15 +85,14 @@ def outputController (ses,):
     global run
     while run:
         with open(os.path.normpath(basePath+appName+".ping"),"w") as pingFile:
+            pingFile.write('['+time.strftime("%d.%m.%Y - %H:%M:%S")+'] Process ID: '+str(os.getpid())+' Listening on: %d' % \
+                           (ses.listen_port()))
             for handle in torrentHandleList:
                 s = handle.status()
                 state_str = ['queued', 'checking', 'downloading metadata', \
                              'downloading', 'finished', 'seeding', 'allocating', 'checking fastresume']
-                #print('\rListening on: %d - %.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s' % \
-                #                (ses.listen_port(), s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, s.num_peers, state_str[s.state]))
-                pingFile.write('['+time.strftime("%d.%m.%Y - %H:%M:%S")+'] Process ID:'+os.getpid()+' Listening on: %d - %.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s' % \
-                                (ses.listen_port(), s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, s.num_peers, state_str[s.state]))
-        #sys.stdout.flush()
+                pingFile.write('\n%.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s' % \
+                                (s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, s.num_peers, state_str[s.state]))
         pingFile.close()
         time.sleep(10)   
     logFile.write("SIGTERM: outputController ended...\n")
