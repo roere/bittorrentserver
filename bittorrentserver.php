@@ -8,8 +8,8 @@
  * Depends: Core, libtorrent (Python)
  * Recommends: None
  * Category: Torrents
- * Author: ROD <webmaster@roederstein.de>
- * Maintainer: ROD <webmaster@roederstein.de>
+ * Author: ROERE <webmaster@roederstein.de>
+ * Maintainer: ROERE <webmaster@roederstein.de>
  */
 /**
  * Install plugin
@@ -34,19 +34,23 @@ function bittorrentserver_install () {
 	write_php_ini ($init, "./addon/".$appName."/".$appName.".cfg");
 	
 	$trackerList = get_config ($appName, 'trackerList');
+	#	if (($trackerList=="")||($trackerList==0)) {
 	$trackerList = "";
 	foreach ($init["Tracker-Default"] as $key => $value) {
 		$trackerList= $trackerList."\n".$value; #create comma seperated list
 	}
 	$trackerList= substr($trackerList, 1); #remove first comma
 	set_config($appName, 'trackerList', $trackerList);
-
+	#	}
+	
+	#	if (!$fileList = get_config ($appName, 'fileList')) {
 	$fileList= "";
 	foreach ($init["File-Default"] as $key => $value) {
 		$fileList = $fileList."\n".$value; #create comma seperated list
 	}
 	$fileList = substr($fileList, 1); #remove first comma
 	set_config($appName, 'fileList', $fileList);
+	#	}
 	
 	bittorrentserver_run_server();
 	logger("Starting server: bittorrentserver_run_server", LOGGER_DEBUG);
@@ -80,6 +84,7 @@ function bittorrentserver_unload(){
 	unregister_hook('feature_settings', 'addon/'.$appName.'/'.$appName.'.php', $appName.'_settings');
 	unregister_hook('feature_settings_post', 'addon/'.$appName.'/'.$appName.'.php', $appName.'_settings_post');
 	
+	#$init = parse_ini_file($basePath.$configFileName, true);
 	$init = parse_ini_file("./addon/".$appName."/".$appName.".cfg", true);
 	$init["Controller"]["sigterm"]=1;
 	write_php_ini ($init, "./addon/".$appName."/".$appName.".cfg");
@@ -207,7 +212,13 @@ function bittorrentserver_plugin_admin(&$a, &$o) {
 	// info text field
 	$o .= '<h3>MagnetURI</h3><div id="magnetLink"><span style="word-wrap: break-word; word-break: break-all;"><pre>'.$magnetURIList.'</pre></span></div>';
 	$o .= '<h3>Server Ping</h3><div id="magnetLink"><span style="word-wrap: break-word; word-break: break-all;"><pre>'.$pingMessage.'</pre></span></div>';
+	$o .= '<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js">';
+	$o .= "$.get('test.php', function(data) {
+			$('#MyDiv').html(data);
+		   });";
+	$o .= '</script>';
 }
+
 /**
  * function unclear!
  * @param unknown $a
