@@ -34,23 +34,19 @@ function bittorrentserver_install () {
 	write_php_ini ($init, "./addon/".$appName."/".$appName.".cfg");
 	
 	$trackerList = get_config ($appName, 'trackerList');
-	#	if (($trackerList=="")||($trackerList==0)) {
 	$trackerList = "";
 	foreach ($init["Tracker-Default"] as $key => $value) {
 		$trackerList= $trackerList."\n".$value; #create comma seperated list
 	}
 	$trackerList= substr($trackerList, 1); #remove first comma
 	set_config($appName, 'trackerList', $trackerList);
-	#	}
 	
-	#	if (!$fileList = get_config ($appName, 'fileList')) {
 	$fileList= "";
 	foreach ($init["File-Default"] as $key => $value) {
 		$fileList = $fileList."\n".$value; #create comma seperated list
 	}
 	$fileList = substr($fileList, 1); #remove first comma
 	set_config($appName, 'fileList', $fileList);
-	#	}
 	
 	bittorrentserver_run_server();
 	logger("Starting server: bittorrentserver_run_server", LOGGER_DEBUG);
@@ -135,8 +131,7 @@ function bittorrentserver_settings(&$a,&$s) {
 		
 		$checked = (($enabled) ? ' checked="checked" ' : '');
 		
-		/* Add some HTML to the existing form */
-		
+		/* Add some HTML to the existing form */	
 		$s .= '<div class="settings-block">';
 		$s .= '<h3>' . t('bittorrentserver Settings') . '</h3>';
 		$s .= '<div id="bittorrentserver-enable-wrapper">';
@@ -145,7 +140,6 @@ function bittorrentserver_settings(&$a,&$s) {
 		$s .= '</div><div class="clear"></div>';
 		
 		/* provide a submit button */
-		
 		$s .= '<div class="settings-submit-wrapper" ><input type="submit" name="bittorrentserver-submit" class="settings-submit" value="' . t('Submit') . '" /></div></div>';
 		
 }
