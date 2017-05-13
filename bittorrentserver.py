@@ -16,7 +16,7 @@ appName = "bittorrentserver"
 basePath = "./addon/"+appName+"/"
 #basePath = "./"
 configFileName = appName+".cfg"
-magnetURIFileName = "magnetURI.out"
+magnetURIFileName = "magnetURI.txt"
 
 trackerList = []    
 
