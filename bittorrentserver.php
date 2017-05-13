@@ -131,7 +131,7 @@ function bittorrentserver_settings(&$a,&$s) {
 		
 		$checked = (($enabled) ? ' checked="checked" ' : '');
 		
-		/* Add some HTML to the existing form */	
+		/* Add some HTML to the existing form */
 		$s .= '<div class="settings-block">';
 		$s .= '<h3>' . t('bittorrentserver Settings') . '</h3>';
 		$s .= '<div id="bittorrentserver-enable-wrapper">';
@@ -158,6 +158,13 @@ function bittorrentserver_plugin_admin_post(&$a) {
 	$tA = explode("\n",$trackerList);
 	$fA = explode("\n",$fileList);
 	
+	for ($i=0;$i<count($tA);$i++) {
+		$tA[$i] = trim($tA[$i]);
+	}
+	for ($i=0;$i<count($fA);$i++) {
+		$fA[$i] = trim($fA[$i]);
+	}
+	
 	$init = parse_ini_file("./addon/bittorrentserver/bittorrentserver.cfg", true);
 	$init["Tracker"]=$tA;
 	$init["File"]=$fA;
@@ -173,10 +180,11 @@ function bittorrentserver_plugin_admin_post(&$a) {
  * @param unknown $o
  */
 function bittorrentserver_plugin_admin(&$a, &$o) {
+	$appName ="bittorrentserver";
 	$t = get_markup_template("admin.tpl", "addon/bittorrentserver/");
 	$trackerList = get_config ('bittorrentserver', 'trackerList');
 	$fileList = get_config ('bittorrentserver', 'fileList');
-	$fName = "./addon/bittorrentserver/magnetURI.out";
+	$fName = "./addon/bittorrentserver/magnetURI.txt";
 	$pName = "./addon/bittorrentserver/bittorrentserver.ping";
 	$magnetURIList = "";
 	$pingMessage = "";
@@ -203,16 +211,15 @@ function bittorrentserver_plugin_admin(&$a, &$o) {
 			'$fileList' => array('fileList', t('Seed-Dateiliste'), $fileList, t('Pfadangaben relativ zum Basisverzeichnis '.$basePath)),
 			'$trackerList' => array('trackerList', t('Tracker-Liste'), $trackerList, t('Liste der Bittorrent-Tracker.')),
 	));
-	// info text field
-	$o .= '<h3>MagnetURI</h3><div id="magnetLink"><span style="word-wrap: break-word; word-break: break-all;"><pre>'.$magnetURIList.'</pre></span></div>';
-	$o .= '<h3>Server Ping</h3><div id="magnetLink"><span style="word-wrap: break-word; word-break: break-all;"><pre>'.$pingMessage.'</pre></span></div>';
-	$o .= '<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js">';
-	$o .= "$.get('test.php', function(data) {
-			$('#MyDiv').html(data);
-		   });";
-	$o .= '</script>';
-}
 
+	$o .= '<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js" type="text/javascript"></script>';
+	$o .= '<h3>MagnetURI</h3><div><span style="word-wrap: break-word; word-break: break-all;"><pre id="magnetLink">'.$magnetURIList.'</pre></span></div>';
+	$o .= '<div class="submit"><input type="button" value="Reload" onClick="$.get(\'addon/'.$appName.'/magnetURI.txt\', function(data) {document.getElementById(\'magnetLink\').innerHTML=data;});"></div>';
+	$o .= '<h3>Server Ping</h3><div><span style="word-wrap: break-word; word-break: break-all;"><pre id="pingMessage">'.$pingMessage.'</pre></span></div>';
+	$o .= '<div class="submit"><input type="button" value="Ping" onClick="$.get(\'addon/'.$appName.'/'.$appName.'.ping\', function(data) {document.getElementById(\'pingMessage\').innerHTML=data;});"></div>';
+	
+}
+	
 /**
  * function unclear!
  * @param unknown $a
