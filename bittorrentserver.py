@@ -16,7 +16,7 @@ appName = "bittorrentserver"
 basePath = "./addon/"+appName+"/"
 #basePath = "./"
 configFileName = appName+".cfg"
-magnetURIFileName = "magnetURI.out"
+magnetURIFileName = "magnetURI.txt"
 
 trackerList = []    
 
@@ -122,37 +122,37 @@ def configFileController (ses,):
                 appendTrackerList(lList)
                 
                 #add Files
-                magnetURIOutFile = open(os.path.normpath(basePath+magnetURIFileName), 'w')
-                fileList = config.items("File")
-                
-                #check all files
-                j=1
-                for mFile in fileList:
-                   
-                    fRaw = mFile[1].replace("\"","") #delete " in file name
-                    i = fRaw.rfind("/")
-                    if i==-1: #just file name given? we expect th e file relative to basePath 
-                        fPath = basePath
-                        fName = fRaw
-                    else:
-                        fName = fRaw[i+1:] #extract file name from given path
-                        if fRaw[0]=="/": #absolute path defined?
-                            fPath = fRaw[:i+1]
+                with open(os.path.normpath(basePath+magnetURIFileName), 'w') as magnetURIOutFile:
+                    fileList = config.items("File")
+                    
+                    #check all files
+                    j=1
+                    for mFile in fileList:
+                       
+                        fRaw = mFile[1].replace("\"","") #delete " in file name
+                        i = fRaw.rfind("/")
+                        if i==-1: #just file name given? we expect th e file relative to basePath 
+                            fPath = basePath
+                            fName = fRaw
                         else:
-                            fPath = basePath+fRaw[:i+1] #relative path? add basePath!
-
-                    logFile.write("SIGRELOAD: reloading:"+fPath+"---"+fName+"\n")
-                    logFile.flush()
-                    if os.path.isfile(fPath+fName):
-                        mLink = addTorrent(fPath, fName)
-                        logFile.write("SIGRELOAD: Magnet-Link:"+mLink+"\n")
+                            fName = fRaw[i+1:] #extract file name from given path
+                            if fRaw[0]=="/": #absolute path defined?
+                                fPath = fRaw[:i+1]
+                            else:
+                                fPath = basePath+fRaw[:i+1] #relative path? add basePath!
+    
+                        logFile.write("SIGRELOAD: reloading:"+fPath+"---"+fName+"\n")
                         logFile.flush()
-                        magnetURIOutFile.write("["+str(j)+"]"+mLink+"\n")
-                    else:
-                        logFile.write("SIGRELOAD: file not found:"+os.path.normpath(fPath+fName)+"\n")
-                        logFile.flush() 
-                        magnetURIOutFile.write("["+str(j)+"] File not found:"+os.path.normpath(fPath+fName)+"\n")
-                    j=j+1       
+                        if os.path.isfile(fPath+fName):
+                            mLink = addTorrent(fPath, fName)
+                            logFile.write("SIGRELOAD: Magnet-Link:"+mLink+"\n")
+                            logFile.flush()
+                            magnetURIOutFile.write("["+str(j)+"]"+mLink+"\n")
+                        else:
+                            logFile.write("SIGRELOAD: file not found:"+os.path.normpath(fPath+fName)+"\n")
+                            logFile.flush() 
+                            magnetURIOutFile.write("["+str(j)+"] File not found:"+os.path.normpath(fPath+fName)+"\n")
+                        j=j+1       
                 magnetURIOutFile.close()
                 config["Controller"]["sigreload"] = "0"
                 logFile.write("SIGRELOAD: resetting SIGRELOAD...")
@@ -240,9 +240,6 @@ ses.listen_on(6881, 6891)
      
 #open logfile
 logFile = open(os.path.normpath(basePath+"bittorrentserver.log"),"w")
-
-#open Magnet-URI output file
-global magnetURIOutFile
 
 #programm stops, when run is false
 run = True
