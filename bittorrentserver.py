@@ -241,9 +241,6 @@ ses.listen_on(6881, 6891)
 #open logfile
 logFile = open(os.path.normpath(basePath+"bittorrentserver.log"),"w")
 
-#open Magnet-URI output file
-global OutFile
-
 #programm stops, when run is false
 run = True
      
