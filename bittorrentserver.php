@@ -180,6 +180,10 @@ function bittorrentserver_plugin_admin_post(&$a) {
  * @param unknown $o
  */
 function bittorrentserver_plugin_admin(&$a, &$o) {
+        $uId = uniqid();
+        $channel = App::get_channel();
+        $observer = App::get_observer();
+
 	$appName ="bittorrentserver";
 	$t = get_markup_template("admin.tpl", "addon/bittorrentserver/");
 	$trackerList = get_config ('bittorrentserver', 'trackerList');
@@ -218,6 +222,24 @@ function bittorrentserver_plugin_admin(&$a, &$o) {
 	$o .= '<h3>Server Ping</h3><div><span style="word-wrap: break-word; word-break: break-all;"><pre id="pingMessage">'.$pingMessage.'</pre></span></div>';
 	$o .= '<div class="submit"><input type="button" value="Ping" onClick="$.get(\'addon/'.$appName.'/'.$appName.'.ping\', function(data) {document.getElementById(\'pingMessage\').innerHTML=data;});"></div>';
 	
+	//List all accessible cloudfiles incl. full path
+        $res = attach_list_files($channel['channel_id'], $observer['xchan_hash'], $hash = '', $filename = '', $filetype = '', $orderby = 'created desc', $start = 0, $entries = 0);
+        $o .= '<br>Dateien:<br>';
+        foreach ($res['results'] as $i => $value) {
+                if ($value['is_dir']<>'1') {
+                        $arr = array ('uid' => $channel['channel_id'], 'folder' => $value['folder'], 'filename' => $value['filename']);
+                        $o .= '<label><input type="checkbox" name="file'.$i.'" value="'.$value['hash'].'">'.get_cloudpath($arr).'</label><br>';
+                }
+        }
+
+        //List all accessible storefiles incl. full path
+        $o .= '<br>Dateien:<br>';
+        foreach ($res['results'] as $i => $value) {
+                if ($value['is_dir']<>'1') {
+                        $arr = array ('uid' => $channel['channel_id'], 'folder' => $value['folder'], 'hash' => $value['hash']);
+                        $o .= '<label><input type="checkbox" name="filehash'.$i.'" value="'.$value['hash'].'">'.get_ospath($arr).'</label><br>';
+                }
+        }	
 }
 	
 /**
@@ -330,4 +352,47 @@ function safefilerewrite($fileName, $dataToSave)
 	fclose($fp);
 }
 }
+
+/**
+ * @todo
+ * @brief Returns path to file in store/.
+ *
+ * @param array $arr associative array with:
+ *  * \e int \b uid the channel's uid
+ *  * \e string \b folder
+ *  * \e string \b hash
+ * @return string
+ *  path to the file in store/
+ */
+function get_ospath($arr) {
+        $basepath = 'store/';
+        if($arr['uid']) {
+                $r = q("select channel_address from channel where channel_id = %d limit 1",
+                        intval($arr['uid'])
+                );
+                if($r)
+                        $basepath .= $r[0]['channel_address'] . '/';
+        }
+        $path = $basepath;
+        if($arr['folder']) {
+                $lpath = '';
+                $lfile = $arr['folder'];
+                do {
+                        $r = q("select filename, hash, flags, is_dir, folder from attach where uid = %d and hash = '%s' and is_dir != 0
+                                limit 1",
+                                intval($arr['uid']),
+                                dbesc($lfile)
+                        );
+                        if(! $r)
+                                break;
+                        if($lfile)
+                                $lpath = $r[0]['hash'] . '/' . $lpath;
+                        $lfile = $r[0]['folder'];
+                } while ( ($r[0]['folder']) && intval($r[0]['is_dir']));
+                $path .= $lpath;
+        }
+        $path .= $arr['hash'];
+        return $path;
+}
+
 ?>
