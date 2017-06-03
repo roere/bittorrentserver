@@ -66,7 +66,7 @@ def inputController(ses,):
             tFile.write(lt.bencode(gTorrent))
             tFile.close()
             
-            handle = ses.add_torrent({'ti': lt.torrent_info(os.path.normpath(filepath+"/"+filename+".torrent")), 'save_path': os.path.normpath(filepath), 'seed_mode': True})
+            handle = ses.add_torrent({'ti': lt.torrent_info(os.path.normpath(filepath+"/"+filename+".torrent")), 'name':filename, 'save_path': os.path.normpath(filepath), 'seed_mode': True})
             torrentHandleList.append(handle)
             
             mLink = lt.make_magnet_uri(lt.torrent_info(gTorrent))
@@ -159,7 +159,7 @@ def configFileController (ses,):
                                 mLink = addTorrent(fPath, fPath, fName, fName)
                                 logFile.write("SIGRELOAD: Magnet-Link:"+mLink+"\n")
                                 logFile.flush()
-                                magnetURIOutFile.write("["+str(j)+"] "+mLink+"\n")
+                                magnetURIOutFile.write("["+str(j)+"] "+mLink)
                             else:
                                 logFile.write("SIGRELOAD: file not found:"+os.path.normpath(fPath+fName)+"\n")
                                 logFile.flush() 
