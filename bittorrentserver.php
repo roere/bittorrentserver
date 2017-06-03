@@ -4,7 +4,7 @@
  *
  * Name: Bittorrent Server
  * Description: A Bittorrent Server for hubzilla. Alpha. Unstable. For testing.
- * Version: 0.1
+ * Version: 0.2
  * Depends: Core, libtorrent (Python)
  * Recommends: None
  * Category: Torrents
@@ -28,6 +28,7 @@ function bittorrentserver_install () {
 	
 	$init["File"]=$init["File-Default"];
 	$init["Tracker"]=$init["Tracker-Default"];
+	$init["Cloudfile"]=array();
 	
 	$init["Controller"]["sigterm"]=0;
 	$init["Controller"]["sigreload"]=1;
@@ -143,6 +144,7 @@ function bittorrentserver_settings(&$a,&$s) {
 		$s .= '<div class="settings-submit-wrapper" ><input type="submit" name="bittorrentserver-submit" class="settings-submit" value="' . t('Submit') . '" /></div></div>';
 		
 }
+
 /**
  * Save admin settings
  * @param unknown $a
@@ -177,12 +179,12 @@ function bittorrentserver_plugin_admin_post(&$a) {
 		$fA[$i] = trim($fA[$i]);
 	}
 	
-	$init = parse_ini_file("./addon/bittorrentserver/bittorrentserver.cfg", true);
+	$init = parse_ini_file("./addon/".$appName."/bittorrentserver.cfg", true);
 	$init["Tracker"]=$tA;
 	$init["File"]=$fA;
 	$init["Cloudfile"]=$cfA;
 	$init["Controller"]["sigreload"]=1;
-	write_php_ini ($init, "./addon/bittorrentserver/bittorrentserver.cfg");
+	write_php_ini ($init, "./addon/".$appName."/bittorrentserver.cfg");
 	
 	info(t('Settings updated.') . EOL);
 }
@@ -197,19 +199,19 @@ function bittorrentserver_plugin_admin(&$a, &$o) {
 	$channel = App::get_channel();
 	$observer = App::get_observer();
 	$appName ="bittorrentserver";
-	$t = get_markup_template("admin.tpl", "addon/bittorrentserver/");
+	$t = get_markup_template("admin.tpl", "addon/".$appName."/");
 	$trackerList = get_config ($appName, 'trackerList');
 	$fileList = get_config ($appName, 'fileList');
 	$cfA = get_config ($appName, 'cloudFileList');
 	
-	$fName = "./addon/bittorrentserver/magnetURI.txt";
-	$pName = "./addon/bittorrentserver/bittorrentserver.ping";
+	$fName = "./addon/".$appName."/magnetURI.txt";
+	$pName = "./addon/".$appName."/bittorrentserver.ping";
 	$magnetURIList = "";
 	$pingMessage = "";
 	if ($fp = fopen($fName, 'r')) {
 		flock($fp, LOCK_SH);
 		while ($row = fgets($fp)) {
-			$magnetURIList = $magnetURIList.$row."\n";
+			$magnetURIList = $magnetURIList.$row;
 		}
 		flock($f, LOCK_UN);
 		fclose($f);
@@ -218,26 +220,16 @@ function bittorrentserver_plugin_admin(&$a, &$o) {
 	if ($fp = fopen($pName, 'r')) {
 		flock($fp, LOCK_SH);
 		while ($row = fgets($fp)) {
-			$pingMessage = $pingMessage.$row."\n";
+			$pingMessage = $pingMessage.$row;
 		}
 		flock($f, LOCK_UN);
 		fclose($f);
 	}
-	
-	$o = replace_macros($t, array(
-			'$submit' => t('Submit Settings'),
-			'$fileList' => array('fileList', t('Seed-Dateiliste'), $fileList, t('Pfadangaben relativ zum Basisverzeichnis '.$basePath)),
-			'$trackerList' => array('trackerList', t('Tracker-Liste'), $trackerList, t('Liste der Bittorrent-Tracker.')),
-	));
-	$o .= '<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js" type="text/javascript"></script>';
-	$o .= '<h3>MagnetURI</h3><div><span style="word-wrap: break-word; word-break: break-all;"><pre id="magnetLink">'.$magnetURIList.'</pre></span></div>';
-	$o .= '<div class="submit"><input type="button" value="Reload" onClick="$.get(\'addon/'.$appName.'/magnetURI.txt\', function(data) {document.getElementById(\'magnetLink\').innerHTML=data;});"></div>';
-	$o .= '<h3>Server Ping</h3><div><span style="word-wrap: break-word; word-break: break-all;"><pre id="pingMessage">'.$pingMessage.'</pre></span></div>';
-	$o .= '<div class="submit"><input type="button" value="Ping" onClick="$.get(\'addon/'.$appName.'/'.$appName.'.ping\', function(data) {document.getElementById(\'pingMessage\').innerHTML=data;});"></div>';
+	$o = '';
 	
 	//List all accessible cloudfiles incl. full path
 	$res = attach_list_files($channel['channel_id'], $observer['xchan_hash'], $hash = '', $filename = '', $filetype = '', $orderby = 'created desc', $start = 0, $entries = 0);
-	$o .= '<br>Dateien:<br>';
+	$o .= '<h3>Dateien</h3>';
 	foreach ($res['results'] as $i => $value) {
 		if ($value['is_dir']<>'1') {
 			$checked = '';
@@ -247,7 +239,20 @@ function bittorrentserver_plugin_admin(&$a, &$o) {
 			$o .= '<label><input type="checkbox" name="file'.$i.'" value="'.$ospath.';'.$value['filename'].'"'.$checked.'>'.get_cloudpath($arr).'</label><br>';
 		}
 	}
-	$o .= '<input type="hidden" name="filecount" value='.$i.'>';
+	$o .= '<input type="hidden" name="filecount" value='.($i+1).'>';
+	
+	$o .= replace_macros($t, array(
+			'$submit' => t('Submit Settings'),
+			'$fileList' => array('fileList', t('Seed-Dateiliste'), $fileList, t('Pfadangaben relativ zum Basisverzeichnis '.$basePath)),
+			'$trackerList' => array('trackerList', t('Tracker-Liste'), $trackerList, t('Liste der Bittorrent-Tracker.')),
+	));
+	
+	$o .= '<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js" type="text/javascript"></script>';
+	$o .= '<h3>MagnetURI</h3><div><span style="word-wrap: break-word; word-break: break-all;"><pre id="magnetLink">'.$magnetURIList.'</pre></span></div>';
+	$o .= '<div class="submit"><input type="button" value="Reload" onClick="$.get(\'addon/'.$appName.'/magnetURI.txt\', function(data) {document.getElementById(\'magnetLink\').innerHTML=data;});"></div>';
+	$o .= '<h3>Server Ping</h3><div><span style="word-wrap: break-word; word-break: break-all;"><pre id="pingMessage">'.$pingMessage.'</pre></span></div>';
+	$o .= '<div class="submit"><input type="button" value="Ping" onClick="$.get(\'addon/'.$appName.'/'.$appName.'.ping\', function(data) {document.getElementById(\'pingMessage\').innerHTML=data;});"></div>';
+	
 }
 
 /**
