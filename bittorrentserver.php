@@ -155,23 +155,25 @@ function bittorrentserver_plugin_admin_post(&$a) {
 	$trackerList = ((x($_POST, 'trackerList')) ? $_POST['trackerList'] : '');
 	$fileList = ((x($_POST, 'fileList')) ? ($_POST['fileList']) : '');
 	$fileCount = intval(((x($_POST, 'filecount')) ? ($_POST['filecount']) : '0'));
-	
+		
+	$tA = array();
+	$fA = array();
 	$cfA = array ();
 	for ($i=0;$i<$fileCount;$i++) {
 		$file = ((x($_POST, 'file'.$i)) ? ($_POST['file'.$i]) : '');
 		if ($file<>'') {
 			$arr=explode(";",$file);
 			$cfA[$arr[0]] = trim(json_encode ($arr[1], JSON_UNESCAPED_SLASHES),"\"");//The Python ConfigParser is not able to read mutated vowels, etc.
+			
 		}
 	}
-	
-	set_config($appName, 'fileList', $fileList);
 	set_config($appName, 'trackerList', $trackerList);
+	set_config($appName, 'fileList', $fileList);
 	set_config($appName, 'cloudFileList', $cfA);
-	
+		
 	$tA = explode("\n",$trackerList);
 	$fA = explode("\n",$fileList);
-	
+		
 	for ($i=0;$i<count($tA);$i++) {
 		$tA[$i] = trim($tA[$i]);
 	}
@@ -179,12 +181,12 @@ function bittorrentserver_plugin_admin_post(&$a) {
 		$fA[$i] = trim($fA[$i]);
 	}
 	
-	$init = parse_ini_file("./addon/".$appName."/bittorrentserver.cfg", true);
+	$init = parse_ini_file("./addon/".$appName."/".$appName.".cfg", true);
 	$init["Tracker"]=$tA;
 	$init["File"]=$fA;
 	$init["Cloudfile"]=$cfA;
 	$init["Controller"]["sigreload"]=1;
-	write_php_ini ($init, "./addon/".$appName."/bittorrentserver.cfg");
+	write_php_ini ($init, "./addon/".$appName."/".$appName.".cfg");
 	
 	info(t('Settings updated.') . EOL);
 }
