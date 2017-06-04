@@ -11,8 +11,10 @@ import configparser
 import libtorrent as lt
 from fileinput import filename
 
-torrentHandleList = [] #Storage for Torrent handles
+#torrentHandleList = [] #Storage for Torrent handles
 torrentList = [] #Storage for Torrents
+torrentName = {} #Torrent name by hash
+magnetLinks = {} #magnetLink by hash
 appName = "bittorrentserver"
 basePath = "./addon/"+appName+"/"
 cloudFileBasePath = "./"
@@ -78,7 +80,7 @@ def inputController(ses,):
             tFile.close()
             
             handle = ses.add_torrent({'ti': lt.torrent_info(os.path.normpath(filepath+"/"+filename+".torrent")), 'name':filename, 'save_path': os.path.normpath(filepath), 'seed_mode': True})
-            torrentHandleList.append(handle)
+            #torrentHandleList.append(handle)
             
             mLink = lt.make_magnet_uri(lt.torrent_info(gTorrent))
             logFile.write("IC: magnet uri:"+mLink+"\n")
@@ -103,11 +105,12 @@ def outputController (ses,):
             with open(os.path.normpath(basePath+appName+".ping"),"w") as pingFile:
                 pingFile.write('['+time.strftime("%d.%m.%Y - %H:%M:%S")+'] Process ID: '+str(os.getpid())+' Listening on: %d' % \
                                (ses.listen_port()))
+                torrentHandleList = ses.get_torrents()
                 for handle in torrentHandleList:
                     s = handle.status()
                     state_str = ['queued', 'checking', 'downloading metadata', \
                                  'downloading', 'finished', 'seeding', 'allocating', 'checking fastresume']
-                    pingFile.write('\n%.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s' % \
+                    pingFile.write(('\n%.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s ('+torrentName[str(handle.get_torrent_info().info_hash())]+')') % \
                                     (s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, s.num_peers, state_str[s.state]))
             pingFile.close()
             time.sleep(10)   
@@ -125,14 +128,18 @@ def configFileController (ses,):
     try:
         logFile.write("ConfigFileController started...\n")
         logFile.flush()
-        config = configparser.ConfigParser()
-        while run:
-            if stamp != os.stat(basePath+configFileName).st_mtime:
+        while run: 
+            if (stamp != os.stat(basePath+configFileName).st_mtime):
                 stamp = os.stat(basePath+configFileName).st_mtime
                 
-                config.read(os.path.normpath(basePath+configFileName))
+                config = configparser.ConfigParser()
+                fp = open(os.path.normpath(basePath+configFileName))
+                config.readfp(fp)
+                
+                #config.read(os.path.normpath(basePath+configFileName))
                 if config["Controller"]["sigterm"] == "1":
                     run = False  
+                    fp.close()
                     logFile.write("SIGTERM recieved...\n")
                     logFile.flush()
                 elif config["Controller"]["sigreload"] == "1":
@@ -147,6 +154,17 @@ def configFileController (ses,):
                     
                     #add Files
                     with open(os.path.normpath(basePath+magnetURIFileName), 'w') as magnetURIOutFile:
+                        
+                        #Before adding new torrent files to the session, we remove all currently active torrents from the session
+                        #and delete all files in the torrents directory.
+                        #Should be checked if there is a more efficient way.
+                        aTorrentList = ses.get_torrents()
+                        for torrent in aTorrentList:
+                            ses.remove_torrent(torrent)
+                        fList = os.listdir(os.path.normpath(basePath+"torrents"))
+                        for df in fList:
+                            os.remove(os.path.normpath(basePath+"torrents/"+df))
+                        
                         fileList = config.items("File")
                         
                         #check all files
@@ -183,14 +201,20 @@ def configFileController (ses,):
                             logFile.write("SIGRELOAD: has section Cloudfile\n")
                             logFile.flush()
                             #check all files
-                            #j=1
                             for cFile in cloudFileList:
                                 j=j+1
-                                fRaw = cFile[0].encode('latin1').decode('utf8') #The Python ConfigParser is not able to read mutated vowels, etc.
+                                fRaw = cFile[0].encode('utf8').decode('utf8') #The Python ConfigParser is not able to read mutated vowels, etc.
                                 i = fRaw.rfind("/")
                                 osfName = fRaw[i+1:] #extract hashed file name   
                                 fPath = cloudFileBasePath+fRaw[:i+1]
-                                fName = cFile[1].encode('latin1').decode('utf8') #real file name
+                                fName = (cFile[1].encode('unicode_escape').decode('unicode_escape')).replace("\"","") #real file name
+                                
+                                logFile.write("SIGRELOAD: CF extracted:"+fName.encode('unicode_escape').decode('unicode_escape')+"\n")
+                                #logFile.write("SIGRELOAD: CF extracted:"+fName.encode('utf8').decode('unicode_escape')+"\n")
+                                logFile.write("SIGRELOAD: CF extracted:"+fName.encode('unicode_escape').decode('utf8')+"\n")
+                                logFile.write("SIGRELOAD: CF extracted:"+fName.encode('unicode_escape').decode('latin1')+"\n")
+                                #logFile.write("SIGRELOAD: CF extracted:"+fName.encode('latin1').decode('unicode_escape')+"\n")
+                                logFile.flush()
                                 
                                 logFile.write("SIGRELOAD: reloading:"+fPath+"--- ("+fName+")\n")
                                 logFile.flush()
@@ -210,11 +234,12 @@ def configFileController (ses,):
                            
                     magnetURIOutFile.close()
                     config["Controller"]["sigreload"] = "0"
-                    with open(os.path.normpath(basePath+configFileName), 'w') as configfile:
-                        config.write(configfile)
+                    fp.close()
+                    with open(os.path.normpath(basePath+configFileName), 'w') as fp:
+                        config.write(fp)
+                    fp.close()
                     logFile.write("SIGRELOAD: reset!...\n")
-                    logFile.flush()
-                        
+                    logFile.flush()  
             else:
                 time.sleep(1)
         logFile.write("SIGTERM: configFileController ended...\n")
@@ -226,11 +251,14 @@ def configFileController (ses,):
     
 #Add Bittorrent-Tracker
 def addTracker (tracker):
-    global trackerList
+    global trackerList, torrentList
     if not (tracker in trackerList):
         trackerList.append(tracker)
     for torrent in torrentList:
         torrent.add_tracker(tracker)
+    #torrentHandleList = ses.get_torrents()
+    #for handle in torrentHandleList:
+    #    handle.add_tracker(tracker)
 
 #Remove Bittorrent-Tracker
 def removeTracker (tracker):
@@ -251,7 +279,7 @@ def addTrackerList (torrent):
             
 #
 def addTorrent (filepath, torrentpath, osfilename, filename):
-    global torrentList, torrentHandleList, ses
+    global torrentName, ses, torrentList #, torrentHandleList
     fileStorage = lt.file_storage()
     lt.add_files(fileStorage, os.path.normpath(filepath+osfilename))
     lTorrent = lt.create_torrent(fileStorage) #lTorrent = localTorrent
@@ -270,9 +298,11 @@ def addTorrent (filepath, torrentpath, osfilename, filename):
     tFile.close()
     
     handle = ses.add_torrent({'ti': lt.torrent_info(os.path.normpath(torrentpath+filename+".torrent")), 'save_path': os.path.normpath(filepath), 'seed_mode': True})
-    torrentHandleList.append(handle)
+    #torrentHandleList.append(handle)
+    torrentName[str(handle.get_torrent_info().info_hash())] = filename
     
     mLink = lt.make_magnet_uri(lt.torrent_info(gTorrent))
+    magnetLinks[str(handle.get_torrent_info().info_hash())] = mLink
     return mLink
             
 #Seed torrent
