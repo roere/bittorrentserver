@@ -25,11 +25,9 @@ function bittorrentserver_install () {
 	}
 	
 	$init = parse_ini_file("./addon/".$appName."/".$appName.".cfg", true);
-	
 	$init["File"]=$init["File-Default"];
 	$init["Tracker"]=$init["Tracker-Default"];
 	$init["Cloudfile"]=array();
-	
 	$init["Controller"]["sigterm"]=0;
 	$init["Controller"]["sigreload"]=1;
 	write_php_ini ($init, "./addon/".$appName."/".$appName.".cfg");
@@ -48,6 +46,8 @@ function bittorrentserver_install () {
 	}
 	$fileList = substr($fileList, 1); #remove first comma
 	set_config($appName, 'fileList', $fileList);
+	
+	set_config($appName, 'cloudFileList', array());
 	
 	bittorrentserver_run_server();
 	logger("Starting server: bittorrentserver_run_server", LOGGER_DEBUG);
@@ -161,7 +161,7 @@ function bittorrentserver_plugin_admin_post(&$a) {
 		$file = ((x($_POST, 'file'.$i)) ? ($_POST['file'.$i]) : '');
 		if ($file<>'') {
 			$arr=explode(";",$file);
-			$cfA[$arr[0]] = $arr[1];
+			$cfA[$arr[0]] = trim(json_encode ($arr[1], JSON_UNESCAPED_SLASHES),"\"");//The Python ConfigParser is not able to read mutated vowels, etc.
 		}
 	}
 	
