@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Created on 23.04.2017
 @author: roere
@@ -20,7 +21,17 @@ cloudFileBasePath = "./"
 configFileName = appName+".cfg"
 magnetURIFileName = "magnetURI.txt"
 
-trackerList = []    
+trackerList = []
+
+class Logger:
+
+    def __init__(self, filename):
+        self.__filename = filename
+        self.__logFile = open(os.path.normpath(basePath+filename),"w")
+        
+    def log (self, message):
+        self.__logFile.write(message)
+        self.__logFile.flush()    
 
 #Controller: Get commands from PHP
 def inputController(ses,):
@@ -118,6 +129,7 @@ def configFileController (ses,):
         while run:
             if stamp != os.stat(basePath+configFileName).st_mtime:
                 stamp = os.stat(basePath+configFileName).st_mtime
+                
                 config.read(os.path.normpath(basePath+configFileName))
                 if config["Controller"]["sigterm"] == "1":
                     run = False  
@@ -138,9 +150,9 @@ def configFileController (ses,):
                         fileList = config.items("File")
                         
                         #check all files
-                        j=1
+                        j=0
                         for mFile in fileList:
-                           
+                            j=j+1
                             fRaw = mFile[1].replace("\"","") #delete " in file name
                             i = fRaw.rfind("/")
                             if i==-1: #just file name given? we expect the file relative to basePath 
@@ -159,12 +171,11 @@ def configFileController (ses,):
                                 mLink = addTorrent(fPath, fPath, fName, fName)
                                 logFile.write("SIGRELOAD: Magnet-Link:"+mLink+"\n")
                                 logFile.flush()
-                                magnetURIOutFile.write("["+str(j)+"] "+mLink)
+                                magnetURIOutFile.write("["+str(j)+"] "+mLink+"\n")
                             else:
                                 logFile.write("SIGRELOAD: file not found:"+os.path.normpath(fPath+fName)+"\n")
                                 logFile.flush() 
-                                magnetURIOutFile.write("["+str(j)+"] File not found:"+os.path.normpath(fPath+fName)+"\n")
-                            j=j+1       
+                                magnetURIOutFile.write("["+str(j)+"] File not found:"+os.path.normpath(fPath+fName)+"\n")       
                         
                         #Cloud Files start
                         if config.has_section ("Cloudfile"):
@@ -174,12 +185,12 @@ def configFileController (ses,):
                             #check all files
                             #j=1
                             for cFile in cloudFileList:
-                               
-                                fRaw = cFile[0]
+                                j=j+1
+                                fRaw = cFile[0].encode('latin1').decode('utf8') #The Python ConfigParser is not able to read mutated vowels, etc.
                                 i = fRaw.rfind("/")
                                 osfName = fRaw[i+1:] #extract hashed file name   
                                 fPath = cloudFileBasePath+fRaw[:i+1]
-                                fName = cFile[1] #real file name
+                                fName = cFile[1].encode('latin1').decode('utf8') #real file name
                                 
                                 logFile.write("SIGRELOAD: reloading:"+fPath+"--- ("+fName+")\n")
                                 logFile.flush()
@@ -191,8 +202,7 @@ def configFileController (ses,):
                                 else:
                                     logFile.write("SIGRELOAD: file not found:"+os.path.normpath(fPath+osfName)+" ("+fName+")\n")
                                     logFile.flush() 
-                                    magnetURIOutFile.write("["+str(j)+"] File not found:"+os.path.normpath(fPath+osfName)+" ("+fName+"\n")
-                                j=j+1    
+                                    magnetURIOutFile.write("["+str(j)+"] File not found:"+os.path.normpath(fPath+osfName)+" ("+fName+"\n")    
                         else:
                             logFile.write("SIGRELOAD: has NO section Cloudfile")
                             logFile.flush()
@@ -200,8 +210,6 @@ def configFileController (ses,):
                            
                     magnetURIOutFile.close()
                     config["Controller"]["sigreload"] = "0"
-                    logFile.write("SIGRELOAD: resetting SIGRELOAD...\n")
-                    logFile.flush()
                     with open(os.path.normpath(basePath+configFileName), 'w') as configfile:
                         config.write(configfile)
                     logFile.write("SIGRELOAD: reset!...\n")
@@ -290,6 +298,7 @@ ses.listen_on(6881, 6891)
      
 #open logfile
 logFile = open(os.path.normpath(basePath+"bittorrentserver.log"),"w")
+logger = Logger("bittorrentserver.log")
 
 #programm stops, when run is false
 run = True
