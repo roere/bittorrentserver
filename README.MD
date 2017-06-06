@@ -1,7 +1,7 @@
 HUBZILLA-PLUGIN
  * Name: Bittorrent Server
  * Description: A Bittorrent Server for hubzilla. Alpha. Unstable. Proof of Concept. For testing.
- * Version: 0.1
+ * Version: 0.2
  * Depends: Core, libtorrent (Python), Python3
  * Recommends: None
  * Category: Torrents
@@ -33,6 +33,6 @@ Webtorrent-Support
 
 The idea behind this plugin was to use Webtorrents in Hubzilla. Libtorrent does not support Webtorrent yet, also it is planned since quite some time: https://github.com/arvidn/libtorrent/issues/223
 
-Seeding Files from Database
+Seeding Files from Hubzilla Cloud
 
-For a better integration it should be possible to choose files from the Hubzilla cloud. Libtorrents default storage is the file system. The storage_interface (http://libtorrent.org/reference-Custom_Storage.html) allows the integration of other storages, like RAM, database, etc., but a database_storage is not yet implemented (http://stackoverflow.com/questions/43619769/use-database-as-custom-storage-with-libtorrent-python).  
+For a good integration it should be possible to choose files from the Hubzilla cloud. Files can currently be selected from the Hubzilla Cloud and are added to the libtorrent session by using the hashed os path under [hubzilla]/store.

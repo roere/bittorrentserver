@@ -4,7 +4,7 @@
  *
  * Name: Bittorrent Server
  * Description: A Bittorrent Server for hubzilla. Alpha. Unstable. For testing.
- * Version: 0.1
+ * Version: 0.2
  * Depends: Core, libtorrent (Python)
  * Recommends: None
  * Category: Torrents
@@ -25,10 +25,9 @@ function bittorrentserver_install () {
 	}
 	
 	$init = parse_ini_file("./addon/".$appName."/".$appName.".cfg", true);
-	
 	$init["File"]=$init["File-Default"];
 	$init["Tracker"]=$init["Tracker-Default"];
-	
+	$init["Cloudfile"]=array();
 	$init["Controller"]["sigterm"]=0;
 	$init["Controller"]["sigreload"]=1;
 	write_php_ini ($init, "./addon/".$appName."/".$appName.".cfg");
@@ -47,6 +46,8 @@ function bittorrentserver_install () {
 	}
 	$fileList = substr($fileList, 1); #remove first comma
 	set_config($appName, 'fileList', $fileList);
+	
+	set_config($appName, 'cloudFileList', array());
 	
 	bittorrentserver_run_server();
 	logger("Starting server: bittorrentserver_run_server", LOGGER_DEBUG);
@@ -143,6 +144,7 @@ function bittorrentserver_settings(&$a,&$s) {
 		$s .= '<div class="settings-submit-wrapper" ><input type="submit" name="bittorrentserver-submit" class="settings-submit" value="' . t('Submit') . '" /></div></div>';
 		
 }
+
 /**
  * Save admin settings
  * @param unknown $a
@@ -152,12 +154,26 @@ function bittorrentserver_plugin_admin_post(&$a) {
 	
 	$trackerList = ((x($_POST, 'trackerList')) ? $_POST['trackerList'] : '');
 	$fileList = ((x($_POST, 'fileList')) ? ($_POST['fileList']) : '');
-	set_config($appName, 'fileList', $fileList);
+	$fileCount = intval(((x($_POST, 'filecount')) ? ($_POST['filecount']) : '0'));
+		
+	$tA = array();
+	$fA = array();
+	$cfA = array ();
+	for ($i=0;$i<$fileCount;$i++) {
+		$file = ((x($_POST, 'file'.$i)) ? ($_POST['file'.$i]) : '');
+		if ($file<>'') {
+			$arr=explode(";",$file);
+			$cfA[$arr[0]] = trim(json_encode ($arr[1], JSON_UNESCAPED_SLASHES),"\"");//The Python ConfigParser is not able to read mutated vowels, etc.
+			
+		}
+	}
 	set_config($appName, 'trackerList', $trackerList);
-	
+	set_config($appName, 'fileList', $fileList);
+	set_config($appName, 'cloudFileList', $cfA);
+		
 	$tA = explode("\n",$trackerList);
 	$fA = explode("\n",$fileList);
-	
+		
 	for ($i=0;$i<count($tA);$i++) {
 		$tA[$i] = trim($tA[$i]);
 	}
@@ -165,11 +181,12 @@ function bittorrentserver_plugin_admin_post(&$a) {
 		$fA[$i] = trim($fA[$i]);
 	}
 	
-	$init = parse_ini_file("./addon/bittorrentserver/bittorrentserver.cfg", true);
+	$init = parse_ini_file("./addon/".$appName."/".$appName.".cfg", true);
 	$init["Tracker"]=$tA;
 	$init["File"]=$fA;
+	$init["Cloudfile"]=$cfA;
 	$init["Controller"]["sigreload"]=1;
-	write_php_ini ($init, "./addon/bittorrentserver/bittorrentserver.cfg");
+	write_php_ini ($init, "./addon/".$appName."/".$appName.".cfg");
 	
 	info(t('Settings updated.') . EOL);
 }
@@ -180,18 +197,23 @@ function bittorrentserver_plugin_admin_post(&$a) {
  * @param unknown $o
  */
 function bittorrentserver_plugin_admin(&$a, &$o) {
+	$uId = uniqid();
+	$channel = App::get_channel();
+	$observer = App::get_observer();
 	$appName ="bittorrentserver";
-	$t = get_markup_template("admin.tpl", "addon/bittorrentserver/");
-	$trackerList = get_config ('bittorrentserver', 'trackerList');
-	$fileList = get_config ('bittorrentserver', 'fileList');
-	$fName = "./addon/bittorrentserver/magnetURI.txt";
-	$pName = "./addon/bittorrentserver/bittorrentserver.ping";
+	$t = get_markup_template("admin.tpl", "addon/".$appName."/");
+	$trackerList = get_config ($appName, 'trackerList');
+	$fileList = get_config ($appName, 'fileList');
+	$cfA = get_config ($appName, 'cloudFileList');
+	
+	$fName = "./addon/".$appName."/magnetURI.txt";
+	$pName = "./addon/".$appName."/".$appName.".ping";
 	$magnetURIList = "";
 	$pingMessage = "";
 	if ($fp = fopen($fName, 'r')) {
 		flock($fp, LOCK_SH);
 		while ($row = fgets($fp)) {
-			$magnetURIList = $magnetURIList.$row."\n";
+			$magnetURIList = $magnetURIList.$row;
 		}
 		flock($f, LOCK_UN);
 		fclose($f);
@@ -200,18 +222,42 @@ function bittorrentserver_plugin_admin(&$a, &$o) {
 	if ($fp = fopen($pName, 'r')) {
 		flock($fp, LOCK_SH);
 		while ($row = fgets($fp)) {
-			$pingMessage = $pingMessage.$row."\n";
+			$pingMessage = $pingMessage.$row;
 		}
 		flock($f, LOCK_UN);
 		fclose($f);
 	}
+	$o = '';
 	
-	$o = replace_macros($t, array(
+	//List all accessible cloudfiles incl. full path
+	$res = attach_list_files($channel['channel_id'], $observer['xchan_hash'], $hash = '', $filename = '', $filetype = '', $orderby = 'created desc', $start = 0, $entries = 0);
+	/** Todo: make magnetlink accessible via Tooltip
+	$o .= '<div id="scoped-content"><style type="text/css" scoped>.tooltip {position: relative; display: inline-block; border-bottom: 1px dotted black; }
+			.tooltip .tooltiptext {visibility: hidden; width: 120px; background-color: #555; color: #fff; text-align: center; border-radius: 6px; padding: 5px 0;
+			position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 1s; }
+			.tooltip .tooltiptext::after {content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #555 transparent transparent transparent;}
+			.tooltip:hover .tooltiptext {visibility: visible; opacity: 1;} </style>';
+	*/
+	$o .= '<h3>Dateien</h3>';
+	foreach ($res['results'] as $i => $value) {
+		if ($value['is_dir']<>'1') {
+			$checked = '';
+			$arr = array ('uid' => $channel['channel_id'], 'folder' => $value['folder'], 'filename' => $value['filename'], 'hash' => $value['hash']);
+			$ospath = get_ospath($arr);
+			if (array_key_exists ( $ospath , $cfA )) $checked=" checked";
+			$o .= '<label><input type="checkbox" name="file'.$i.'" value="'.$ospath.';'.$value['filename'].'"'.$checked.'>'.get_cloudpath($arr).'</label><br>';
+			//Tooltip todo: $o .= '<div class="tooltip">MAGNET<span class="tooltiptext">Here will appear the magnet link.</span></div><br>';
+		}
+	}
+	//Tooltip todo: $o .= '</div>';
+	$o .= '<input type="hidden" name="filecount" value='.($i+1).'>';
+	
+	$o .= replace_macros($t, array(
 			'$submit' => t('Submit Settings'),
 			'$fileList' => array('fileList', t('Seed-Dateiliste'), $fileList, t('Pfadangaben relativ zum Basisverzeichnis '.$basePath)),
 			'$trackerList' => array('trackerList', t('Tracker-Liste'), $trackerList, t('Liste der Bittorrent-Tracker.')),
 	));
-
+	
 	$o .= '<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js" type="text/javascript"></script>';
 	$o .= '<h3>MagnetURI</h3><div><span style="word-wrap: break-word; word-break: break-all;"><pre id="magnetLink">'.$magnetURIList.'</pre></span></div>';
 	$o .= '<div class="submit"><input type="button" value="Reload" onClick="$.get(\'addon/'.$appName.'/magnetURI.txt\', function(data) {document.getElementById(\'magnetLink\').innerHTML=data;});"></div>';
@@ -219,7 +265,7 @@ function bittorrentserver_plugin_admin(&$a, &$o) {
 	$o .= '<div class="submit"><input type="button" value="Ping" onClick="$.get(\'addon/'.$appName.'/'.$appName.'.ping\', function(data) {document.getElementById(\'pingMessage\').innerHTML=data;});"></div>';
 	
 }
-	
+
 /**
  * function unclear!
  * @param unknown $a
@@ -329,5 +375,46 @@ function safefilerewrite($fileName, $dataToSave)
 	}
 	fclose($fp);
 }
+}
+/**
+ * @todo
+ * @brief Returns path to file in store/.
+ *
+ * @param array $arr associative array with:
+ *  * \e int \b uid the channel's uid
+ *  * \e string \b folder
+ *  * \e string \b hash
+ * @return string
+ *  path to the file in store/
+ */
+function get_ospath($arr) {
+	$basepath = 'store/';
+	if($arr['uid']) {
+		$r = q("select channel_address from channel where channel_id = %d limit 1",
+				intval($arr['uid'])
+				);
+		if($r)
+			$basepath .= $r[0]['channel_address'] . '/';
+	}
+	$path = $basepath;
+	if($arr['folder']) {
+		$lpath = '';
+		$lfile = $arr['folder'];
+		do {
+			$r = q("select filename, hash, flags, is_dir, folder from attach where uid = %d and hash = '%s' and is_dir != 0
+                                limit 1",
+					intval($arr['uid']),
+					dbesc($lfile)
+					);
+			if(! $r)
+				break;
+				if($lfile)
+					$lpath = $r[0]['hash'] . '/' . $lpath;
+					$lfile = $r[0]['folder'];
+		} while ( ($r[0]['folder']) && intval($r[0]['is_dir']));
+		$path .= $lpath;
+	}
+	$path .= $arr['hash'];
+	return $path;
 }
 ?>
