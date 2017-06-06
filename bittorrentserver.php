@@ -207,7 +207,7 @@ function bittorrentserver_plugin_admin(&$a, &$o) {
 	$cfA = get_config ($appName, 'cloudFileList');
 	
 	$fName = "./addon/".$appName."/magnetURI.txt";
-	$pName = "./addon/".$appName."/bittorrentserver.ping";
+	$pName = "./addon/".$appName."/".$appName.".ping";
 	$magnetURIList = "";
 	$pingMessage = "";
 	if ($fp = fopen($fName, 'r')) {
@@ -231,6 +231,13 @@ function bittorrentserver_plugin_admin(&$a, &$o) {
 	
 	//List all accessible cloudfiles incl. full path
 	$res = attach_list_files($channel['channel_id'], $observer['xchan_hash'], $hash = '', $filename = '', $filetype = '', $orderby = 'created desc', $start = 0, $entries = 0);
+	/** Todo: make magnetlink accessible via Tooltip
+	$o .= '<div id="scoped-content"><style type="text/css" scoped>.tooltip {position: relative; display: inline-block; border-bottom: 1px dotted black; }
+			.tooltip .tooltiptext {visibility: hidden; width: 120px; background-color: #555; color: #fff; text-align: center; border-radius: 6px; padding: 5px 0;
+			position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 1s; }
+			.tooltip .tooltiptext::after {content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #555 transparent transparent transparent;}
+			.tooltip:hover .tooltiptext {visibility: visible; opacity: 1;} </style>';
+	*/
 	$o .= '<h3>Dateien</h3>';
 	foreach ($res['results'] as $i => $value) {
 		if ($value['is_dir']<>'1') {
@@ -239,8 +246,10 @@ function bittorrentserver_plugin_admin(&$a, &$o) {
 			$ospath = get_ospath($arr);
 			if (array_key_exists ( $ospath , $cfA )) $checked=" checked";
 			$o .= '<label><input type="checkbox" name="file'.$i.'" value="'.$ospath.';'.$value['filename'].'"'.$checked.'>'.get_cloudpath($arr).'</label><br>';
+			//Tooltip todo: $o .= '<div class="tooltip">MAGNET<span class="tooltiptext">Here will appear the magnet link.</span></div><br>';
 		}
 	}
+	//Tooltip todo: $o .= '</div>';
 	$o .= '<input type="hidden" name="filecount" value='.($i+1).'>';
 	
 	$o .= replace_macros($t, array(
