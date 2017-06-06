@@ -117,7 +117,7 @@ def outputController (ses,):
         logFile.write("SIGTERM: outputController ended...\n")
         logFile.flush()
     except:
-        logFile.write("Unexpected error:\n->"+str(sys.exc_info()[0])+"\n->"+str(sys.exc_info()[1])+"\n->"+str(sys.exc_info()[2])+"\n")
+        logFile.write("Unexpected error in outputController:\n->"+str(sys.exc_info()[0])+"\n->"+str(sys.exc_info()[1])+"\n->"+str(sys.exc_info()[2])+"\n")
         logFile.flush()
         run = False
     
@@ -155,7 +155,7 @@ def configFileController (ses,):
                     #add Files
                     with open(os.path.normpath(basePath+magnetURIFileName), 'w') as magnetURIOutFile:
                         
-                        #Before adding new torrent files to the session, we remove all currently active torrents from the session
+                        #Before adding new torrent files to the the session, we remove all currently active torrents from the session
                         #and delete all files in the torrents directory.
                         #Should be checked if there is a more efficient way.
                         aTorrentList = ses.get_torrents()
@@ -186,7 +186,7 @@ def configFileController (ses,):
                             logFile.write("SIGRELOAD: reloading:"+fPath+"---"+fName+"\n")
                             logFile.flush()
                             if os.path.isfile(fPath+fName):
-                                mLink = addTorrent(fPath, fPath, fName, fName)
+                                mLink = addTorrent(fPath, (basePath+"torrents/"), fName, fName)
                                 logFile.write("SIGRELOAD: Magnet-Link:"+mLink+"\n")
                                 logFile.flush()
                                 magnetURIOutFile.write("["+str(j)+"] "+mLink+"\n")
@@ -203,17 +203,14 @@ def configFileController (ses,):
                             #check all files
                             for cFile in cloudFileList:
                                 j=j+1
-                                fRaw = cFile[0].encode('utf8').decode('utf8') #The Python ConfigParser is not able to read mutated vowels, etc.
+                                fRaw = cFile[0]
                                 i = fRaw.rfind("/")
                                 osfName = fRaw[i+1:] #extract hashed file name   
                                 fPath = cloudFileBasePath+fRaw[:i+1]
-                                fName = (cFile[1].encode('unicode_escape').decode('unicode_escape')).replace("\"","") #real file name
+                                fName = cFile[1].replace("\"","")
+                                #fName = fName.encode('utf8','strict').decode('unicode_escape') #real file name. Decoding: The Python ConfigParser is not able to read mutated vowels, etc.
                                 
-                                logFile.write("SIGRELOAD: CF extracted:"+fName.encode('unicode_escape').decode('unicode_escape')+"\n")
-                                #logFile.write("SIGRELOAD: CF extracted:"+fName.encode('utf8').decode('unicode_escape')+"\n")
-                                logFile.write("SIGRELOAD: CF extracted:"+fName.encode('unicode_escape').decode('utf8')+"\n")
-                                logFile.write("SIGRELOAD: CF extracted:"+fName.encode('unicode_escape').decode('latin1')+"\n")
-                                #logFile.write("SIGRELOAD: CF extracted:"+fName.encode('latin1').decode('unicode_escape')+"\n")
+                                logFile.write("SIGRELOAD: CF extracted: encoded\n")
                                 logFile.flush()
                                 
                                 logFile.write("SIGRELOAD: reloading:"+fPath+"--- ("+fName+")\n")
@@ -287,7 +284,7 @@ def addTorrent (filepath, torrentpath, osfilename, filename):
     addTrackerList(lTorrent)
     
     lTorrent.set_creator('Hubzilla using Libtorrent %s' % lt.version)
-    lTorrent.set_comment("Filename:"+filename)
+    lTorrent.set_comment("Filename:"+filename.encode('utf8','strict').decode('unicode_escape'))
     
     lt.set_piece_hashes(lTorrent, os.path.normpath(filepath))
     gTorrent = lTorrent.generate() #gTorrent = generated Torrent
